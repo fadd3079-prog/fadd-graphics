@@ -1,0 +1,25 @@
+{
+  "name": "portofolio",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fadd3079-prog/website-design.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/fadd3079-prog/website-design/issues"
+  },
+  "homepage": "https://github.com/fadd3079-prog/website-design#readme",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "mongoose": "^9.1.5"
+  }
+}
