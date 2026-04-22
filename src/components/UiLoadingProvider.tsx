@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -10,7 +11,7 @@ import {
 
 type UiLoadingContextValue = {
   isLoading: boolean;
-  showLoading: (duration?: number) => Promise<void>;
+  showLoading: (duration?: number) => Promise<boolean>;
 };
 
 const UiLoadingContext = createContext<UiLoadingContextValue | null>(null);
@@ -18,22 +19,46 @@ const UiLoadingContext = createContext<UiLoadingContextValue | null>(null);
 function UiLoadingProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const timeoutRef = useRef<number | null>(null);
+  const pendingResolveRef = useRef<((shouldContinue: boolean) => void) | null>(null);
+  const requestIdRef = useRef(0);
 
-  const showLoading = useCallback((duration = 360) => {
+  const clearPendingLoading = useCallback((shouldContinue: boolean) => {
     if (timeoutRef.current !== null) {
       window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
+
+    pendingResolveRef.current?.(shouldContinue);
+    pendingResolveRef.current = null;
+  }, []);
+
+  const showLoading = useCallback((duration = 360) => {
+    requestIdRef.current += 1;
+    const requestId = requestIdRef.current;
+
+    clearPendingLoading(false);
 
     setIsLoading(true);
 
-    return new Promise<void>((resolve) => {
+    return new Promise<boolean>((resolve) => {
+      pendingResolveRef.current = resolve;
       timeoutRef.current = window.setTimeout(() => {
-        setIsLoading(false);
+        const shouldContinue = requestId === requestIdRef.current;
+
+        if (shouldContinue) {
+          setIsLoading(false);
+        }
+
         timeoutRef.current = null;
-        resolve();
+        pendingResolveRef.current = null;
+        resolve(shouldContinue);
       }, duration);
     });
-  }, []);
+  }, [clearPendingLoading]);
+
+  useEffect(() => () => {
+    clearPendingLoading(false);
+  }, [clearPendingLoading]);
 
   const value = useMemo(
     () => ({

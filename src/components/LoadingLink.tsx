@@ -24,7 +24,13 @@ function LoadingLink({
 
     if (
       event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
       props.target === "_blank" ||
+      props.download !== undefined ||
       href.startsWith("http") ||
       href.startsWith("mailto:") ||
       href.startsWith("tel:")
@@ -33,7 +39,11 @@ function LoadingLink({
     }
 
     event.preventDefault();
-    await showLoading(loadingDuration);
+    const shouldContinue = await showLoading(loadingDuration);
+
+    if (!shouldContinue) {
+      return;
+    }
 
     if (href.startsWith("/")) {
       navigate(href);

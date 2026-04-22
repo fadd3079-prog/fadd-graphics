@@ -39,6 +39,7 @@
 
   html {
     @apply bg-bg text-text;
+    scrollbar-gutter: stable;
   }
 
   body {

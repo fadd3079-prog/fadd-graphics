@@ -1,15 +1,11 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import LoadingLink from "../components/LoadingLink";
 import { heroStats } from "../data/site-content";
-import { heroPortfolioIds, portfolioImageMap, portfolioItems } from "../data/portfolio";
+import { heroPortfolioItems, portfolioImageMap } from "../data/portfolio";
 import logoMark from "../assets/branding/fadd-mark-teal.png";
 
-const heroItems = heroPortfolioIds
-  .map((id) => portfolioItems.find((item) => item.id === id))
-  .filter((item): item is (typeof portfolioItems)[number] => Boolean(item));
-
 function HeroSection() {
-  const [primaryItem, secondaryItem, accentItem] = heroItems;
+  const [primaryItem, teaserItem] = heroPortfolioItems;
 
   return (
     <section id="hero" className="section-shell pt-28 sm:pt-32 lg:pt-36">
@@ -59,95 +55,80 @@ function HeroSection() {
           </div>
         </div>
 
-        <div className="max-w-[38rem] motion-safe:animate-rise motion-safe:duration-700 xl:ml-auto">
-          <div className="section-frame overflow-hidden rounded-[2rem] p-4 shadow-edge">
-            <div className="grid gap-4 lg:grid-cols-[0.98fr_0.82fr]">
-              <article className="overflow-hidden rounded-[1.55rem] border border-line/80 bg-surface">
-                <div className="flex items-center justify-between border-b border-line/80 px-4 py-3 sm:px-5">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] border border-line/70 bg-card">
-                      <img src={logoMark} alt="FADD GRAPHICS" className="h-6 w-6 dark:brightness-[1.35]" />
+        <div className="max-w-[34rem] motion-safe:animate-rise motion-safe:duration-700 xl:ml-auto">
+          <div className="section-frame overflow-hidden rounded-[1.85rem] p-4 shadow-edge">
+            <div className="grid gap-4">
+              {primaryItem ? (
+                <article className="overflow-hidden rounded-[1.45rem] border border-line/80 bg-surface">
+                  <div className="flex items-center justify-between border-b border-line/80 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] border border-line/70 bg-card">
+                        <img src={logoMark} alt="FADD GRAPHICS" className="h-6 w-6 dark:brightness-[1.35]" />
+                      </span>
+                      <div>
+                        <p className="editorial-note">Portfolio teaser</p>
+                        <p className="text-[0.9rem] font-semibold tracking-[-0.02em] text-text">Kurasi ringkas</p>
+                      </div>
+                    </div>
+                    <span className="rounded-full border border-lineStrong/70 px-3 py-1.5 text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-muted">
+                      Pilihan
                     </span>
-                    <div>
-                      <p className="editorial-note">Featured portfolio</p>
-                      <p className="text-[0.92rem] font-semibold tracking-[-0.02em] text-text">
-                        FADD GRAPHICS
-                      </p>
-                    </div>
                   </div>
-                  <span className="rounded-full border border-lineStrong/70 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted">
-                    Curated
-                  </span>
-                </div>
 
-                {primaryItem ? (
-                  <>
-                    <div className="aspect-[5/4] overflow-hidden border-b border-line/80 bg-card">
-                      <img
-                        src={portfolioImageMap[primaryItem.imageName]}
-                        alt={primaryItem.title}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="space-y-2.5 p-4">
+                  <div className="aspect-[6/5] overflow-hidden border-b border-line/80 bg-card">
+                    <img
+                      src={portfolioImageMap[primaryItem.imageName]}
+                      alt={primaryItem.title}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <div className="grid gap-4 p-4">
+                    <div className="grid gap-2">
                       <p className="editorial-note">{primaryItem.deliverable}</p>
-                      <h2 className="max-w-[14ch] text-[1.28rem] font-bold tracking-[-0.04em] text-text sm:text-[1.45rem]">
+                      <h2 className="max-w-[15ch] text-[1.15rem] font-bold tracking-[-0.04em] text-text sm:text-[1.28rem]">
                         {primaryItem.title}
                       </h2>
-                      <p className="text-[0.92rem] leading-6 text-muted">{primaryItem.focus}</p>
+                      <p className="text-[0.9rem] leading-6 text-muted">{primaryItem.focus}</p>
                     </div>
-                  </>
-                ) : null}
-              </article>
 
-              <div className="grid gap-4">
-                {secondaryItem ? (
-                  <article className="overflow-hidden rounded-[1.45rem] border border-line/80 bg-surface">
-                    <div className="aspect-[4/5] overflow-hidden border-b border-line/80">
-                      <img
-                        src={portfolioImageMap[secondaryItem.imageName]}
-                        alt={secondaryItem.title}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <p className="editorial-note">Selected work</p>
-                      <p className="mt-2 text-[0.95rem] font-semibold tracking-[-0.03em] text-text">
-                        {secondaryItem.title}
-                      </p>
-                    </div>
-                  </article>
-                ) : null}
-
-                <article className="grid gap-4 rounded-[1.45rem] border border-line/80 bg-surface p-4">
-                  <div className="grid gap-3 border-b border-line/80 pb-4">
-                    <p className="editorial-note">What this portfolio prioritizes</p>
-                    <p className="text-[0.96rem] leading-7 text-text">
-                      Hierarki yang kuat, pacing visual yang tenang, dan presentasi yang terasa dewasa di
-                      desktop maupun mobile.
-                    </p>
-                  </div>
-
-                  {accentItem ? (
-                    <div className="grid gap-3 sm:grid-cols-[84px_1fr] sm:items-center">
-                      <div className="overflow-hidden rounded-[1rem] border border-line/80">
-                        <img
-                          src={portfolioImageMap[accentItem.imageName]}
-                          alt={accentItem.title}
-                          className="aspect-square w-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="editorial-note">Editorial focus</p>
-                        <p className="mt-2 text-[0.98rem] font-semibold tracking-[-0.03em] text-text">
-                          {accentItem.title}
+                    <div className="grid gap-3 rounded-[1.2rem] border border-line/80 bg-card p-3.5 sm:grid-cols-[78px_1fr] sm:items-center">
+                      {teaserItem ? (
+                        <>
+                          <div className="overflow-hidden rounded-[0.9rem] border border-line/80">
+                            <img
+                              src={portfolioImageMap[teaserItem.imageName]}
+                              alt={teaserItem.title}
+                              className="aspect-[4/5] w-full object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="editorial-note">Teaser lain</p>
+                            <p className="mt-1 truncate text-[0.92rem] font-semibold tracking-[-0.03em] text-text">
+                              {teaserItem.title}
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-[0.9rem] leading-6 text-text">
+                          Pilihan karya lain tersedia di halaman arsip lengkap.
                         </p>
-                        <p className="mt-1 text-[0.88rem] leading-6 text-muted">{accentItem.focus}</p>
-                      </div>
+                      )}
                     </div>
-                  ) : null}
+
+                    <div className="rounded-[1.2rem] border border-line/80 bg-surface p-4">
+                      <p className="editorial-note">Lihat semua portofolio</p>
+                      <p className="mt-2 max-w-[28ch] text-[0.92rem] leading-6 text-text">
+                        Masuk ke arsip penuh untuk menjelajahi seluruh koleksi karya tanpa susunan yang padat di beranda.
+                      </p>
+                      <LoadingLink href="/portfolio" className="button-primary mt-4 w-full justify-center">
+                        Lihat semua portofolio
+                        <ArrowUpRight className="h-4 w-4" />
+                      </LoadingLink>
+                    </div>
+                  </div>
                 </article>
-              </div>
+              ) : null}
             </div>
           </div>
         </div>

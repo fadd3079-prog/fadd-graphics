@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BackToTop from "../components/BackToTop";
+import FirstVisitNotice from "../components/FirstVisitNotice";
 import { useTheme } from "../hooks/useTheme";
 import HomePage from "../pages/HomePage";
 import PortfolioPage from "../pages/PortfolioPage";
@@ -48,6 +49,7 @@ function App() {
 
       <Footer />
       <BackToTop />
+      <FirstVisitNotice />
     </div>
   );
 }

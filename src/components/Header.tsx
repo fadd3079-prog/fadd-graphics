@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import LoadingLink from "./LoadingLink";
 import ThemeToggle from "./ThemeToggle";
 import type { ThemeMode } from "../hooks/useTheme";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { navItems } from "../data/site-content";
 import logoMarkLight from "../assets/branding/fadd-mark-teal.png";
 import logoMarkDark from "../assets/branding/fadd-mark-white-compact.png";
@@ -19,6 +20,8 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
   const location = useLocation();
   const isHomePage = location.pathname === "/";
 
+  useBodyScrollLock(isMenuOpen);
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 24);
 
@@ -27,14 +30,6 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = isMenuOpen ? "hidden" : "";
-
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMenuOpen]);
 
   const shellClassName = isScrolled
     ? "border-line bg-bg shadow-edge"

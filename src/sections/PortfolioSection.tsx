@@ -4,19 +4,15 @@ import LoadingLink from "../components/LoadingLink";
 import SectionHeading from "../components/SectionHeading";
 import PortfolioModal from "../components/PortfolioModal";
 import {
-  featuredPortfolioIds,
-  portfolioArchive,
+  featuredPortfolioItems,
+  portfolioArchivePreview,
   portfolioCategories,
   portfolioImageMap,
   portfolioItems,
   type PortfolioCategory,
 } from "../data/portfolio";
 
-const featuredItems = featuredPortfolioIds
-  .map((id) => portfolioItems.find((item) => item.id === id))
-  .filter((item): item is (typeof portfolioItems)[number] => Boolean(item));
-
-const [primaryFeaturedItem, ...secondaryFeaturedItems] = featuredItems;
+const [primaryFeaturedItem, ...secondaryFeaturedItems] = featuredPortfolioItems;
 
 const imageAspectMap = {
   wide: "aspect-[4/3]",
@@ -37,8 +33,6 @@ function PortfolioSection() {
     selectedItemId === null
       ? null
       : portfolioItems.find((item) => item.id === selectedItemId) ?? null;
-
-  const archivePreview = portfolioArchive.slice(0, 14);
 
   return (
     <section id="portfolio" className="section-shell section-space">
@@ -198,7 +192,7 @@ function PortfolioSection() {
           </div>
 
           <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-            {archivePreview.slice(0, 7).map((item) => (
+            {portfolioArchivePreview.map((item) => (
               <div key={item.imageName} className="overflow-hidden rounded-[0.95rem] border border-line/80 bg-surface">
                 <img
                   src={item.source}

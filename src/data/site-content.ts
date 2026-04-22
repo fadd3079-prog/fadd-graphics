@@ -210,3 +210,11 @@ export const contactLinks = [
     href: "https://www.linkedin.com/in/mufaddhol-01b60333a/",
   },
 ];
+
+export const maintenanceNotice = {
+  eyebrow: "Maintenance notice",
+  title: "Website ini masih dalam tahap penyempurnaan.",
+  description:
+    "Portofolio masih ditinjau dan diperbarui secara bertahap. Beberapa detail karya dapat berubah selama proses review berjalan.",
+  cta: "Lanjutkan ke website",
+};

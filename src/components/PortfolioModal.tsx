@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { ArrowUpRight, X } from "lucide-react";
 import type { PortfolioDisplayItem } from "../data/portfolio";
 import { portfolioImageMap } from "../data/portfolio";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 
 type PortfolioModalProps = {
   item: PortfolioDisplayItem | null;
@@ -10,6 +11,8 @@ type PortfolioModalProps = {
 
 function PortfolioModal({ item, onClose }: PortfolioModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useBodyScrollLock(Boolean(item));
 
   useEffect(() => {
     if (!item) {
@@ -21,13 +24,13 @@ function PortfolioModal({ item, onClose }: PortfolioModalProps) {
         onClose();
       }
     };
-
-    document.body.style.overflow = "hidden";
+    const animationFrame = window.requestAnimationFrame(() => {
+      closeButtonRef.current?.focus();
+    });
     window.addEventListener("keydown", handleKeyDown);
-    closeButtonRef.current?.focus();
 
     return () => {
-      document.body.style.overflow = "";
+      window.cancelAnimationFrame(animationFrame);
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [item, onClose]);
@@ -40,21 +43,21 @@ function PortfolioModal({ item, onClose }: PortfolioModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-4"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-4 transition-opacity duration-200 ease-premium motion-safe:animate-rise"
       role="dialog"
       aria-modal="true"
       aria-labelledby={`${item.id}-title`}
       onClick={onClose}
     >
       <div
-        className="section-frame relative w-full max-w-[30rem] overflow-hidden rounded-[1.45rem] bg-surface sm:max-w-[32rem]"
+        className="section-frame relative w-full max-w-[28rem] overflow-hidden rounded-[1.35rem] bg-surface shadow-edge sm:max-w-[29rem]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="border-b border-line/80 bg-card p-3">
           <img
             src={imageSource}
             alt={item.title}
-            className="max-h-[22rem] w-full object-contain"
+            className="max-h-[19rem] w-full object-contain"
           />
         </div>
 

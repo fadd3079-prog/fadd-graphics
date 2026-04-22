@@ -53,14 +53,13 @@ export const portfolioCategories = [
 ] as const;
 
 export const featuredPortfolioIds = [
-  "satdwima-brand-identity",
   "anti-sexual-violence-campaign",
   "oppenheimer-collage-poster",
+  "journey-editorial-collage",
 ];
 
 export const heroPortfolioIds = [
   "journey-editorial-collage",
-  "satdwima-brand-identity",
   "anti-sexual-violence-campaign",
 ];
 
@@ -223,7 +222,18 @@ export const portfolioItems: PortfolioItem[] = [
   },
 ];
 
+const portfolioItemMap = new Map(portfolioItems.map((item) => [item.id, item]));
 const portfolioItemByImageName = new Map(portfolioItems.map((item) => [item.imageName, item]));
+const selectPortfolioItems = (ids: readonly string[]) =>
+  ids.flatMap((id) => {
+    const item = portfolioItemMap.get(id);
+
+    return item ? [item] : [];
+  });
+
+export const featuredPortfolioItems = selectPortfolioItems(featuredPortfolioIds);
+export const heroPortfolioItems = selectPortfolioItems(heroPortfolioIds);
+export const portfolioArchivePreview = portfolioArchive.slice(0, 7);
 
 export const portfolioGalleryItems: PortfolioDisplayItem[] = portfolioArchive.map(({ imageName }, index) => {
   const curatedItem = portfolioItemByImageName.get(imageName);
