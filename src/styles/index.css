@@ -1,0 +1,165 @@
+@import "@fontsource-variable/inter";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --color-bg: 246 248 251;
+    --color-surface: 251 252 253;
+    --color-card: 255 255 255;
+    --color-line: 222 227 233;
+    --color-line-strong: 198 206 216;
+    --color-text: 19 27 39;
+    --color-muted: 98 109 124;
+    --color-accent: 41 92 118;
+    --color-accent-strong: 28 67 91;
+    --color-accent-soft: 235 242 247;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --color-bg: 13 18 24;
+    --color-surface: 18 24 32;
+    --color-card: 23 30 39;
+    --color-line: 61 72 87;
+    --color-line-strong: 84 97 114;
+    --color-text: 236 240 244;
+    --color-muted: 156 166 178;
+    --color-accent: 129 181 204;
+    --color-accent-strong: 102 161 189;
+    --color-accent-soft: 24 37 47;
+  }
+
+  * {
+    @apply border-line;
+  }
+
+  html {
+    @apply bg-bg text-text;
+  }
+
+  body {
+    @apply min-h-screen bg-bg font-sans text-[15px] text-text antialiased sm:text-[15.5px];
+    font-feature-settings: "cv11" 1, "ss01" 1, "ss03" 1;
+    letter-spacing: -0.012em;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display font-bold tracking-[-0.045em] text-text;
+  }
+
+  p {
+    @apply text-[0.96rem] leading-[1.72] text-muted;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  ::selection {
+    @apply bg-accentSoft text-text;
+  }
+
+  a,
+  button,
+  input,
+  select,
+  textarea {
+    @apply transition duration-300 ease-premium;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-bg;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply inline-flex items-center rounded-full border border-lineStrong bg-card px-3.5 py-1.5 text-[0.66rem] font-semibold uppercase tracking-[0.2em] text-muted;
+  }
+
+  .surface-panel {
+    @apply border border-line bg-card shadow-soft;
+  }
+
+  .input-shell {
+    @apply w-full rounded-[1.1rem] border border-line bg-surface px-4 py-3.5 text-[0.96rem] font-medium text-text placeholder:text-muted;
+  }
+
+  .button-primary {
+    @apply inline-flex items-center gap-2 rounded-full bg-text px-4 py-2.5 text-[0.78rem] font-semibold uppercase tracking-[0.08em] text-bg hover:bg-accent hover:text-white;
+  }
+
+  .button-secondary {
+    @apply inline-flex items-center gap-2 rounded-full border border-lineStrong bg-transparent px-4 py-2.5 text-[0.78rem] font-semibold uppercase tracking-[0.08em] text-text hover:border-accent hover:text-accent;
+  }
+
+  .section-frame {
+    @apply rounded-[2rem] border border-line bg-card shadow-soft;
+  }
+
+  .editorial-note {
+    @apply text-[0.75rem] font-semibold uppercase tracking-[0.18em] text-muted;
+  }
+}
+
+@layer utilities {
+  .section-shell {
+    @apply mx-auto w-full max-w-[1280px] px-5 sm:px-7 lg:px-10;
+  }
+
+  .section-space {
+    @apply mt-20 sm:mt-24 lg:mt-28;
+  }
+
+  .animate-rise {
+    animation: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .type-display {
+    @apply text-[2.8rem] font-extrabold leading-[0.93] tracking-[-0.065em] sm:text-[3.85rem] lg:text-[4.9rem] xl:text-[5.55rem];
+  }
+
+  .type-section {
+    @apply text-[2.05rem] font-bold leading-[0.96] tracking-[-0.055em] sm:text-[2.7rem] lg:text-[3.35rem];
+  }
+
+  .type-subtitle {
+    @apply text-[0.98rem] leading-[1.72] text-muted sm:text-[1.03rem];
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

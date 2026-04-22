@@ -1,0 +1,159 @@
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { heroStats } from "../data/site-content";
+import { heroPortfolioIds, portfolioImageMap, portfolioItems } from "../data/portfolio";
+import logoMark from "../assets/branding/fadd-mark-teal.png";
+
+const heroItems = heroPortfolioIds
+  .map((id) => portfolioItems.find((item) => item.id === id))
+  .filter((item): item is (typeof portfolioItems)[number] => Boolean(item));
+
+function HeroSection() {
+  const [primaryItem, secondaryItem, accentItem] = heroItems;
+
+  return (
+    <section id="hero" className="section-shell pt-28 sm:pt-32 lg:pt-36">
+      <div className="grid items-start gap-10 xl:grid-cols-[0.98fr_0.92fr] xl:gap-12">
+        <div className="max-w-[44rem] motion-safe:animate-rise motion-safe:duration-700">
+          <span className="eyebrow">Graphic design portfolio</span>
+          <h1 className="type-display mt-6 max-w-[12ch] text-balance text-text">
+            Visual yang lebih tenang, presisi, dan layak dipercaya.
+          </h1>
+          <p className="mt-5 max-w-[38rem] text-[1rem] leading-[1.72] text-muted sm:text-[1.04rem]">
+            FADD GRAPHICS membantu brand, organisasi, dan event tampil lebih kuat melalui desain yang
+            terarah, komposisi yang rapi, dan keputusan visual yang tidak terasa generik.
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a href="#portfolio" className="button-primary">
+              Lihat karya unggulan
+              <ArrowUpRight className="h-4 w-4" />
+            </a>
+            <Link to="/portfolio" className="button-secondary">
+              Buka arsip penuh
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
+            <a href="#contact" className="button-secondary">
+              Kirim brief baru
+              <ArrowDownRight className="h-4 w-4" />
+            </a>
+          </div>
+
+          <div className="mt-10 grid gap-4 border-y border-line/80 py-5 sm:grid-cols-3">
+            {heroStats.map((stat, index) => (
+              <div key={stat.label} className={index === 0 ? "" : "sm:border-l sm:border-line/80 sm:pl-5"}>
+                <p className="text-[1.85rem] font-extrabold tracking-[-0.05em] text-text">{stat.value}</p>
+                <p className="mt-1.5 text-[0.82rem] font-medium uppercase tracking-[0.08em] text-muted">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-7 max-w-[31rem] border-l border-lineStrong/70 pl-4">
+            <p className="editorial-note">Studio note</p>
+            <p className="mt-2 text-[0.98rem] leading-7 text-text">
+              Fokus utama situs ini adalah menunjukkan rasa visual dan kedewasaan presentasi, bukan
+              sekadar menumpuk efek yang sedang populer.
+            </p>
+          </div>
+        </div>
+
+        <div className="max-w-[38rem] motion-safe:animate-rise motion-safe:duration-700 xl:ml-auto">
+          <div className="section-frame overflow-hidden rounded-[2rem] p-4 shadow-edge">
+            <div className="grid gap-4 lg:grid-cols-[0.98fr_0.82fr]">
+              <article className="overflow-hidden rounded-[1.55rem] border border-line/80 bg-surface">
+                <div className="flex items-center justify-between border-b border-line/80 px-4 py-3 sm:px-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] border border-line/70 bg-card">
+                      <img src={logoMark} alt="FADD GRAPHICS" className="h-6 w-6 dark:brightness-[1.35]" />
+                    </span>
+                    <div>
+                      <p className="editorial-note">Featured portfolio</p>
+                      <p className="text-[0.92rem] font-semibold tracking-[-0.02em] text-text">
+                        FADD GRAPHICS
+                      </p>
+                    </div>
+                  </div>
+                  <span className="rounded-full border border-lineStrong/70 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted">
+                    Curated
+                  </span>
+                </div>
+
+                {primaryItem ? (
+                  <>
+                    <div className="aspect-[5/4] overflow-hidden border-b border-line/80 bg-card">
+                      <img
+                        src={portfolioImageMap[primaryItem.imageName]}
+                        alt={primaryItem.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="space-y-2.5 p-4">
+                      <p className="editorial-note">{primaryItem.deliverable}</p>
+                      <h2 className="max-w-[14ch] text-[1.28rem] font-bold tracking-[-0.04em] text-text sm:text-[1.45rem]">
+                        {primaryItem.title}
+                      </h2>
+                      <p className="text-[0.92rem] leading-6 text-muted">{primaryItem.focus}</p>
+                    </div>
+                  </>
+                ) : null}
+              </article>
+
+              <div className="grid gap-4">
+                {secondaryItem ? (
+                  <article className="overflow-hidden rounded-[1.45rem] border border-line/80 bg-surface">
+                    <div className="aspect-[4/5] overflow-hidden border-b border-line/80">
+                      <img
+                        src={portfolioImageMap[secondaryItem.imageName]}
+                        alt={secondaryItem.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <p className="editorial-note">Selected work</p>
+                      <p className="mt-2 text-[0.95rem] font-semibold tracking-[-0.03em] text-text">
+                        {secondaryItem.title}
+                      </p>
+                    </div>
+                  </article>
+                ) : null}
+
+                <article className="grid gap-4 rounded-[1.45rem] border border-line/80 bg-surface p-4">
+                  <div className="grid gap-3 border-b border-line/80 pb-4">
+                    <p className="editorial-note">What this portfolio prioritizes</p>
+                    <p className="text-[0.96rem] leading-7 text-text">
+                      Hierarki yang kuat, pacing visual yang tenang, dan presentasi yang terasa dewasa di
+                      desktop maupun mobile.
+                    </p>
+                  </div>
+
+                  {accentItem ? (
+                    <div className="grid gap-3 sm:grid-cols-[84px_1fr] sm:items-center">
+                      <div className="overflow-hidden rounded-[1rem] border border-line/80">
+                        <img
+                          src={portfolioImageMap[accentItem.imageName]}
+                          alt={accentItem.title}
+                          className="aspect-square w-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p className="editorial-note">Editorial focus</p>
+                        <p className="mt-2 text-[0.98rem] font-semibold tracking-[-0.03em] text-text">
+                          {accentItem.title}
+                        </p>
+                        <p className="mt-1 text-[0.88rem] leading-6 text-muted">{accentItem.focus}</p>
+                      </div>
+                    </div>
+                  ) : null}
+                </article>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default HeroSection;
