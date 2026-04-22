@@ -1,5 +1,5 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import LoadingLink from "../components/LoadingLink";
 import { heroStats } from "../data/site-content";
 import { heroPortfolioIds, portfolioImageMap, portfolioItems } from "../data/portfolio";
 import logoMark from "../assets/branding/fadd-mark-teal.png";
@@ -29,14 +29,14 @@ function HeroSection() {
               Lihat karya unggulan
               <ArrowUpRight className="h-4 w-4" />
             </a>
-            <Link to="/portfolio" className="button-secondary">
+            <LoadingLink href="/portfolio" className="button-secondary">
               Buka arsip penuh
               <ArrowUpRight className="h-4 w-4" />
-            </Link>
-            <a href="#contact" className="button-secondary">
+            </LoadingLink>
+            <LoadingLink href="#contact" className="button-secondary" loadingDuration={280}>
               Kirim brief baru
               <ArrowDownRight className="h-4 w-4" />
-            </a>
+            </LoadingLink>
           </div>
 
           <div className="mt-10 grid gap-4 border-y border-line/80 py-5 sm:grid-cols-3">

@@ -1,6 +1,6 @@
 import { startTransition, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import LoadingLink from "../components/LoadingLink";
 import SectionHeading from "../components/SectionHeading";
 import PortfolioModal from "../components/PortfolioModal";
 import {
@@ -144,10 +144,10 @@ function PortfolioSection() {
                 </span>
                 .
               </p>
-              <Link to="/portfolio" className="button-secondary self-center sm:self-auto">
+              <LoadingLink href="/portfolio" className="button-secondary self-center sm:self-auto">
                 Buka portofolio penuh
                 <ArrowUpRight className="h-4 w-4" />
-              </Link>
+              </LoadingLink>
             </div>
           </div>
         </div>
@@ -191,10 +191,10 @@ function PortfolioSection() {
                 Masuk ke halaman portofolio penuh untuk melihat seluruh koleksi dalam susunan yang lebih rapat dan lebih visual.
               </p>
             </div>
-            <Link to="/portfolio" className="inline-flex items-center gap-2 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text hover:text-accent">
+            <LoadingLink href="/portfolio" className="inline-flex items-center gap-2 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text hover:text-accent">
               Lihat seluruh koleksi
               <ArrowUpRight className="h-4 w-4" />
-            </Link>
+            </LoadingLink>
           </div>
 
           <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-7">

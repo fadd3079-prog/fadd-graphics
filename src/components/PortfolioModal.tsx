@@ -47,14 +47,14 @@ function PortfolioModal({ item, onClose }: PortfolioModalProps) {
       onClick={onClose}
     >
       <div
-        className="section-frame relative grid max-h-[78vh] w-full max-w-[38rem] overflow-hidden rounded-[1.55rem] bg-surface sm:max-w-[40rem] md:grid-cols-[1.02fr_0.82fr]"
+        className="section-frame relative w-full max-w-[30rem] overflow-hidden rounded-[1.45rem] bg-surface sm:max-w-[32rem]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="relative min-h-[210px] border-b border-line/80 bg-card md:min-h-[300px] md:border-b-0 md:border-r">
+        <div className="border-b border-line/80 bg-card p-3">
           <img
             src={imageSource}
             alt={item.title}
-            className="h-full w-full object-contain p-2.5"
+            className="max-h-[22rem] w-full object-contain"
           />
         </div>
 
@@ -84,7 +84,7 @@ function PortfolioModal({ item, onClose }: PortfolioModalProps) {
           {item.summary ? <p className="text-[0.9rem] leading-6 text-muted">{item.summary}</p> : null}
 
           {item.focus || item.tone ? (
-            <dl className="grid gap-3">
+            <dl className="grid gap-3 sm:grid-cols-2">
               {item.focus ? (
                 <div className="rounded-[1rem] border border-line/80 bg-card p-3.5">
                   <dt className="editorial-note">Fokus</dt>

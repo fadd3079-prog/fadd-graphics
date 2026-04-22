@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import LoadingLink from "./LoadingLink";
 import ThemeToggle from "./ThemeToggle";
 import type { ThemeMode } from "../hooks/useTheme";
 import { navItems } from "../data/site-content";
@@ -63,15 +64,15 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
           <nav className="hidden items-center gap-1.5 lg:flex">
             {navItems.map((item) => (
               item.kind === "page" ? (
-                <Link
+                <LoadingLink
                   key={item.label}
-                  to={item.target}
+                  href={item.target}
                   className={`rounded-full px-3.5 py-2 text-[0.78rem] font-semibold uppercase tracking-[0.08em] ${
                     location.pathname === item.target ? "bg-card text-text" : "text-muted hover:bg-card hover:text-text"
                   }`}
                 >
                   {item.label}
-                </Link>
+                </LoadingLink>
               ) : (
                 <a
                   key={item.label}
@@ -108,14 +109,14 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
             <nav className="flex flex-col gap-2">
               {navItems.map((item) => (
                 item.kind === "page" ? (
-                  <Link
+                  <LoadingLink
                     key={item.label}
-                    to={item.target}
+                    href={item.target}
                     className="rounded-[1.1rem] border border-line/60 bg-card px-4 py-3 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text hover:border-lineStrong/80"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {item.label}
-                  </Link>
+                  </LoadingLink>
                 ) : (
                   <a
                     key={item.label}

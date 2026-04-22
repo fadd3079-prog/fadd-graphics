@@ -1,5 +1,6 @@
 import { ArrowUpRight, Instagram, Linkedin, Mail, MessageCircle } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import LoadingLink from "./LoadingLink";
 import logoMarkLight from "../assets/branding/fadd-mark-teal.png";
 import logoMarkDark from "../assets/branding/fadd-mark-white-compact.png";
 
@@ -61,18 +62,18 @@ function Footer() {
             Arah cepat
           </p>
           <div className="mt-4 flex flex-col gap-3 text-[0.84rem] font-semibold uppercase tracking-[0.08em]">
-            <Link to="/portfolio" className="inline-flex items-center gap-2 text-text hover:text-accent">
+            <LoadingLink href="/portfolio" className="inline-flex items-center gap-2 text-text hover:text-accent">
               Buka arsip karya
               <ArrowUpRight className="h-4 w-4" />
-            </Link>
+            </LoadingLink>
             <a href={servicesHref} className="inline-flex items-center gap-2 text-text hover:text-accent">
               Pelajari layanan
               <ArrowUpRight className="h-4 w-4" />
             </a>
-            <a href={contactHref} className="inline-flex items-center gap-2 text-text hover:text-accent">
+            <LoadingLink href={contactHref} className="inline-flex items-center gap-2 text-text hover:text-accent" loadingDuration={280}>
               Kirim brief
               <ArrowUpRight className="h-4 w-4" />
-            </a>
+            </LoadingLink>
           </div>
         </div>
 
