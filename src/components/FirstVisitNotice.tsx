@@ -4,17 +4,25 @@ import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 
 const storageKey = "fadd-maintenance-notice-dismissed";
 
+function hasDismissedNotice() {
+  return window.sessionStorage.getItem(storageKey) === "1";
+}
+
+function dismissNoticeForSession() {
+  window.sessionStorage.setItem(storageKey, "1");
+}
+
 function FirstVisitNotice() {
   const [isVisible, setIsVisible] = useState(false);
   const dismissButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const dismiss = useCallback(() => {
-    window.localStorage.setItem(storageKey, "1");
+    dismissNoticeForSession();
     setIsVisible(false);
   }, []);
 
   useEffect(() => {
-    if (!window.localStorage.getItem(storageKey)) {
+    if (!hasDismissedNotice()) {
       setIsVisible(true);
     }
   }, []);
