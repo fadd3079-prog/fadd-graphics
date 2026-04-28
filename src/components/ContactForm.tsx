@@ -1,4 +1,5 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useLanguage } from "../hooks/useLanguage";
 
 type FormValues = {
   name: string;
@@ -25,39 +26,52 @@ const initialValues: FormValues = {
 
 const fieldClassName = "input-shell";
 
-function validate(values: FormValues): FormErrors {
+function validate(values: FormValues, errors: ReturnType<typeof useLanguage>["copy"]["contact"]["form"]["errors"]): FormErrors {
   const nextErrors: FormErrors = {};
 
   if (!values.name.trim()) {
-    nextErrors.name = "Nama perlu diisi.";
+    nextErrors.name = errors.name;
   }
 
   if (!values.email.trim()) {
-    nextErrors.email = "Email perlu diisi.";
+    nextErrors.email = errors.emailRequired;
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-    nextErrors.email = "Gunakan format email yang valid.";
+    nextErrors.email = errors.emailInvalid;
   }
 
   if (!values.service) {
-    nextErrors.service = "Pilih jenis proyek yang paling mendekati kebutuhan Anda.";
+    nextErrors.service = errors.service;
   }
 
   if (!values.message.trim()) {
-    nextErrors.message = "Ceritakan kebutuhan proyek secara singkat.";
+    nextErrors.message = errors.messageRequired;
   } else if (values.message.trim().length < 24) {
-    nextErrors.message = "Agar briefing lebih jelas, tulis setidaknya 24 karakter.";
+    nextErrors.message = errors.messageLength;
   }
 
   return nextErrors;
 }
 
 function ContactForm() {
+  const { copy } = useLanguage();
+  const formCopy = copy.contact.form;
   const [values, setValues] = useState<FormValues>(initialValues);
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<FormStatus>({
     type: "idle",
-    message: "Isi detail singkat, lalu lanjutkan ke WhatsApp dengan brief yang sudah dirapikan.",
+    message: formCopy.idle,
   });
+
+  useEffect(() => {
+    setStatus((currentStatus) =>
+      currentStatus.type === "idle"
+        ? {
+            type: "idle",
+            message: formCopy.idle,
+          }
+        : currentStatus,
+    );
+  }, [formCopy.idle]);
 
   const updateField =
     (field: keyof FormValues) =>
@@ -78,26 +92,26 @@ function ContactForm() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const nextErrors = validate(values);
+    const nextErrors = validate(values, formCopy.errors);
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       setStatus({
         type: "error",
-        message: "Masih ada informasi yang perlu dirapikan sebelum brief dikirim.",
+        message: formCopy.error,
       });
       return;
     }
 
     const whatsappMessage = [
-      "Halo FADD GRAPHICS, saya ingin mendiskusikan proyek baru.",
+      formCopy.whatsappIntro,
       "",
-      `Nama: ${values.name}`,
-      `Email: ${values.email}`,
-      `Jenis proyek: ${values.service}`,
-      `Timeline: ${values.timeline || "Belum ditentukan"}`,
+      `${formCopy.whatsappLabels.name}: ${values.name}`,
+      `${formCopy.whatsappLabels.email}: ${values.email}`,
+      `${formCopy.whatsappLabels.service}: ${values.service}`,
+      `${formCopy.whatsappLabels.timeline}: ${values.timeline || formCopy.whatsappLabels.fallbackTimeline}`,
       "",
-      "Ringkasan kebutuhan:",
+      formCopy.whatsappLabels.summary,
       values.message,
     ].join("\n");
 
@@ -107,8 +121,7 @@ function ContactForm() {
 
     setStatus({
       type: "success",
-      message:
-        "Brief sudah disusun. Lanjutkan percakapan lewat WhatsApp atau gunakan email jika lebih nyaman.",
+      message: formCopy.success,
       href,
     });
     setValues(initialValues);
@@ -123,41 +136,40 @@ function ContactForm() {
     >
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text">
-          <span>Nama</span>
+          <span>{formCopy.fields.name}</span>
           <input
             type="text"
             value={values.name}
             onChange={updateField("name")}
             className={fieldClassName}
-            placeholder="Nama lengkap"
+            placeholder={formCopy.placeholders.name}
             autoComplete="name"
           />
           {errors.name ? <span className="text-sm text-accentStrong">{errors.name}</span> : null}
         </label>
 
         <label className="space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text">
-          <span>Email</span>
+          <span>{formCopy.fields.email}</span>
           <input
             type="email"
             value={values.email}
             onChange={updateField("email")}
             className={fieldClassName}
-            placeholder="nama@email.com"
+            placeholder={formCopy.placeholders.email}
             autoComplete="email"
           />
           {errors.email ? <span className="text-sm text-accentStrong">{errors.email}</span> : null}
         </label>
 
         <label className="space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text">
-          <span>Jenis proyek</span>
+          <span>{formCopy.fields.service}</span>
           <select value={values.service} onChange={updateField("service")} className={fieldClassName}>
-            <option value="">Pilih layanan</option>
-            <option value="Logo & identitas visual">Logo & identitas visual</option>
-            <option value="Poster & materi kampanye">Poster & materi kampanye</option>
-            <option value="Konten sosial media">Konten sosial media</option>
-            <option value="Banner & materi cetak">Banner & materi cetak</option>
-            <option value="Apparel & merchandise">Apparel & merchandise</option>
-            <option value="Permintaan desain khusus">Permintaan desain khusus</option>
+            <option value="">{formCopy.placeholders.service}</option>
+            {copy.services.items.map((service) => (
+              <option key={service.key} value={service.title}>
+                {service.title}
+              </option>
+            ))}
           </select>
           {errors.service ? (
             <span className="text-sm text-accentStrong">{errors.service}</span>
@@ -165,24 +177,25 @@ function ContactForm() {
         </label>
 
         <label className="space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text">
-          <span>Timeline</span>
+          <span>{formCopy.fields.timeline}</span>
           <select value={values.timeline} onChange={updateField("timeline")} className={fieldClassName}>
-            <option value="">Belum ditentukan</option>
-            <option value="Secepatnya">Secepatnya</option>
-            <option value="1-2 minggu">1-2 minggu</option>
-            <option value="2-4 minggu">2-4 minggu</option>
-            <option value="Lebih dari 1 bulan">Lebih dari 1 bulan</option>
+            <option value="">{formCopy.placeholders.timeline}</option>
+            {formCopy.timelineOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </label>
       </div>
 
       <label className="mt-5 block space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text">
-        <span>Ringkasan kebutuhan</span>
+        <span>{formCopy.fields.message}</span>
         <textarea
           value={values.message}
           onChange={updateField("message")}
           className={`${fieldClassName} min-h-[180px] resize-none`}
-          placeholder="Ceritakan tujuan proyek, jenis deliverable, gaya visual yang diinginkan, dan hal penting lain yang perlu diketahui."
+          placeholder={formCopy.placeholders.message}
         />
         {errors.message ? (
           <span className="text-sm text-accentStrong">{errors.message}</span>
@@ -194,7 +207,7 @@ function ContactForm() {
           {status.message}
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 sm:shrink-0">
           {status.type === "success" ? (
             <>
               <a
@@ -203,21 +216,21 @@ function ContactForm() {
                 rel="noreferrer"
                 className="button-primary"
               >
-                Buka WhatsApp
+                {formCopy.openWhatsapp}
               </a>
               <a
                 href="mailto:fadd3079@gmail.com"
                 className="button-secondary"
               >
-                Kirim via email
+                {formCopy.sendEmail}
               </a>
             </>
           ) : (
             <button
               type="submit"
-              className="button-primary"
+              className="button-primary whitespace-nowrap"
             >
-              Siapkan brief
+              {formCopy.submit}
             </button>
           )}
         </div>

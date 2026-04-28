@@ -5,7 +5,8 @@ import LoadingLink from "./LoadingLink";
 import ThemeToggle from "./ThemeToggle";
 import type { ThemeMode } from "../hooks/useTheme";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
-import { navItems } from "../data/site-content";
+import { useLanguage } from "../hooks/useLanguage";
+import type { Language } from "../data/site-content";
 import logoMarkLight from "../assets/branding/fadd-mark-teal.png";
 import logoMarkDark from "../assets/branding/fadd-mark-white-compact.png";
 
@@ -17,8 +18,10 @@ type HeaderProps = {
 function Header({ theme, onToggleTheme }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { copy, language, languageLabels, setLanguage } = useLanguage();
   const location = useLocation();
   const isHomePage = location.pathname === "/";
+  const languages: Language[] = ["id", "en"];
 
   useBodyScrollLock(isMenuOpen);
 
@@ -48,7 +51,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
             </span>
             <span className="hidden sm:block">
               <span className="block text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-muted">
-                Independent design studio
+                {copy.header.tagline}
               </span>
               <span className="block text-[0.92rem] font-bold tracking-[-0.03em] text-text">
                 FADD GRAPHICS
@@ -57,7 +60,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
           </Link>
 
           <nav className="hidden items-center gap-1.5 lg:flex">
-            {navItems.map((item) => (
+            {copy.navItems.map((item) => (
               item.kind === "page" ? (
                 <LoadingLink
                   key={item.label}
@@ -81,17 +84,34 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
           </nav>
 
           <div className="flex items-center gap-2">
+            <div
+              className="hidden rounded-full border border-line bg-card p-1 sm:flex"
+              aria-label={copy.header.languageLabel}
+            >
+              {languages.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  className={`rounded-full px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.1em] ${
+                    language === item ? "bg-text text-bg" : "text-muted hover:text-text"
+                  }`}
+                  onClick={() => setLanguage(item)}
+                >
+                  {languageLabels[item]}
+                </button>
+              ))}
+            </div>
             <ThemeToggle theme={theme} onToggle={onToggleTheme} />
 
             <a href={isHomePage ? "#contact" : "/#contact"} className="button-primary hidden sm:inline-flex">
-              Mulai proyek
+              {copy.header.cta}
               <ArrowUpRight className="h-4 w-4" />
             </a>
 
             <button
               type="button"
               className="surface-panel flex h-11 w-11 items-center justify-center rounded-full bg-card lg:hidden"
-              aria-label={isMenuOpen ? "Tutup navigasi" : "Buka navigasi"}
+              aria-label={isMenuOpen ? copy.header.closeMenu : copy.header.openMenu}
               onClick={() => setIsMenuOpen((currentState) => !currentState)}
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -102,7 +122,21 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
         {isMenuOpen ? (
           <div className="border-t border-line/80 px-4 pb-4 pt-3 lg:hidden">
             <nav className="flex flex-col gap-2">
-              {navItems.map((item) => (
+              <div className="mb-1 flex rounded-full border border-line bg-card p-1">
+                {languages.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    className={`flex-1 rounded-full px-3 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.1em] ${
+                      language === item ? "bg-text text-bg" : "text-muted"
+                    }`}
+                    onClick={() => setLanguage(item)}
+                  >
+                    {languageLabels[item]}
+                  </button>
+                ))}
+              </div>
+              {copy.navItems.map((item) => (
                 item.kind === "page" ? (
                   <LoadingLink
                     key={item.label}
@@ -124,7 +158,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
                 )
               ))}
               <a href={isHomePage ? "#contact" : "/#contact"} className="button-primary mt-2 justify-center" onClick={() => setIsMenuOpen(false)}>
-                Mulai proyek
+                {copy.header.cta}
                 <ArrowUpRight className="h-4 w-4" />
               </a>
             </nav>

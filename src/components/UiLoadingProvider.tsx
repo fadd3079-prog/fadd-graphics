@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useLanguage } from "../hooks/useLanguage";
 
 type UiLoadingContextValue = {
   isLoading: boolean;
@@ -18,6 +19,7 @@ const UiLoadingContext = createContext<UiLoadingContextValue | null>(null);
 
 function UiLoadingProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
+  const { copy } = useLanguage();
   const timeoutRef = useRef<number | null>(null);
   const pendingResolveRef = useRef<((shouldContinue: boolean) => void) | null>(null);
   const requestIdRef = useRef(0);
@@ -80,7 +82,7 @@ function UiLoadingProvider({ children }: { children: ReactNode }) {
         <div className="surface-panel flex items-center gap-3 rounded-full px-4 py-2.5 shadow-edge">
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-lineStrong border-t-accent" />
           <span className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-text">
-            Memuat
+            {copy.app.loading}
           </span>
         </div>
       </div>

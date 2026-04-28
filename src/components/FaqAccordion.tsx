@@ -7,7 +7,7 @@ type FaqItem = {
 };
 
 type FaqAccordionProps = {
-  items: FaqItem[];
+  items: readonly FaqItem[];
 };
 
 function FaqAccordion({ items }: FaqAccordionProps) {

@@ -4,12 +4,18 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BackToTop from "../components/BackToTop";
 import FirstVisitNotice from "../components/FirstVisitNotice";
+import ProtectedAdminRoute from "../components/ProtectedAdminRoute";
 import { useTheme } from "../hooks/useTheme";
+import { useLanguage } from "../hooks/useLanguage";
+import AdminDashboardPage from "../pages/AdminDashboardPage";
+import AdminLoginPage from "../pages/AdminLoginPage";
 import HomePage from "../pages/HomePage";
+import PortfolioDetailPage from "../pages/PortfolioDetailPage";
 import PortfolioPage from "../pages/PortfolioPage";
 
 function App() {
   const { theme, toggleTheme } = useTheme();
+  const { copy } = useLanguage();
   const location = useLocation();
 
   useEffect(() => {
@@ -29,7 +35,7 @@ function App() {
         href="#content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-card focus:px-4 focus:py-2"
       >
-        Lewati ke konten utama
+        {copy.app.skipLink}
       </a>
 
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -43,6 +49,16 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
+          <Route path="/portfolio/:portfolioSlug" element={<PortfolioDetailPage />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedAdminRoute>
+                <AdminDashboardPage />
+              </ProtectedAdminRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

@@ -1,4 +1,5 @@
 export type PortfolioCategory =
+  | "logo"
   | "identity"
   | "campaign"
   | "editorial"
@@ -11,6 +12,7 @@ export type PortfolioLayout = "wide" | "tall" | "panoramic";
 export type PortfolioItem = {
   id: string;
   imageName: string;
+  slug?: string;
   title: string;
   category: PortfolioCategory;
   summary: string;
@@ -19,12 +21,24 @@ export type PortfolioItem = {
   tone: string;
   tags: string[];
   layout: PortfolioLayout;
+  galleryImageNames?: string[];
+  galleryImageUrls?: string[];
+  imageUrl?: string;
+  ctaLabel?: string;
+  detailPath?: string;
+  isFeatured?: boolean;
+  isHome?: boolean;
 };
 
 export type PortfolioDisplayItem = Pick<PortfolioItem, "id" | "imageName" | "title" | "layout"> &
-  Partial<Pick<PortfolioItem, "category" | "summary" | "deliverable" | "focus" | "tone" | "tags">>;
+  Partial<Pick<PortfolioItem, "slug" | "category" | "summary" | "deliverable" | "focus" | "tone" | "tags" | "galleryImageNames" | "galleryImageUrls" | "imageUrl" | "ctaLabel" | "detailPath" | "isFeatured" | "isHome">>;
 
 const portfolioImages = import.meta.glob<string>("../assets/portfolio/*.webp", {
+  eager: true,
+  import: "default",
+});
+
+const ruangUsahaBrandingImages = import.meta.glob<string>("../assets/portfolio/ruangusaha-branding/*.webp", {
   eager: true,
   import: "default",
 });
@@ -33,17 +47,56 @@ const sortedImageEntries = Object.entries(portfolioImages).sort(([first], [secon
   first.localeCompare(second, undefined, { numeric: true }),
 );
 
+const sortedRuangUsahaImageEntries = Object.entries(ruangUsahaBrandingImages).sort(([first], [second]) =>
+  first.localeCompare(second, undefined, { numeric: true }),
+);
+
+const allPortfolioImageEntries = [...sortedImageEntries, ...sortedRuangUsahaImageEntries];
+
 export const portfolioImageMap = Object.fromEntries(
-  sortedImageEntries.map(([path, source]) => [path.split("/").pop()!, source]),
+  allPortfolioImageEntries.map(([path, source]) => [path.split("/").pop()!, source]),
 ) as Record<string, string>;
+
+export function getPortfolioImageSource(item: Pick<PortfolioDisplayItem, "imageName" | "imageUrl">) {
+  return item.imageUrl ?? portfolioImageMap[item.imageName] ?? item.imageName;
+}
+
+export function getPortfolioGallerySources(
+  item: Pick<PortfolioDisplayItem, "galleryImageNames" | "galleryImageUrls">,
+) {
+  if (item.galleryImageUrls?.length) {
+    return item.galleryImageUrls;
+  }
+
+  return item.galleryImageNames
+    ?.map((imageName) => portfolioImageMap[imageName])
+    .filter((source): source is string => Boolean(source)) ?? [];
+}
+
+export function hasPortfolioGallery(item: Pick<PortfolioDisplayItem, "galleryImageNames" | "galleryImageUrls">) {
+  return getPortfolioGallerySources(item).length > 0;
+}
+
+export function getPortfolioDetailPath(item: PortfolioDisplayItem) {
+  if (!hasPortfolioGallery(item)) {
+    return undefined;
+  }
+
+  return item.detailPath ?? `/portfolio/${item.slug ?? item.id}`;
+}
 
 export const portfolioArchive = sortedImageEntries.map(([path, source]) => ({
   imageName: path.split("/").pop()!,
   source,
 }));
 
+const ruangUsahaBrandingImageNames = sortedRuangUsahaImageEntries.map(([path]) => path.split("/").pop()!);
+const [ruangUsahaBrandingCoverImageName, ...ruangUsahaBrandingGalleryImageNames] = ruangUsahaBrandingImageNames;
+export const ruangUsahaBrandingDetailPath = "/portfolio/ruangusaha-branding";
+
 export const portfolioCategories = [
   { id: "all", label: "Semua" },
+  { id: "logo", label: "Logo" },
   { id: "identity", label: "Identitas" },
   { id: "campaign", label: "Kampanye" },
   { id: "editorial", label: "Editorial" },
@@ -64,6 +117,24 @@ export const heroPortfolioIds = [
 ];
 
 export const portfolioItems: PortfolioItem[] = [
+  {
+    id: "ruangusahakita-logo-utama",
+    slug: "ruangusaha-branding",
+    imageName: ruangUsahaBrandingCoverImageName,
+    title: "RuangUsahaKita (logo utama)",
+    category: "logo",
+    summary:
+      "Koleksi preview identitas RuangUsahaKita yang menampilkan aplikasi mark dalam beberapa konteks visual.",
+    deliverable: "Logo",
+    focus: "Logo utama dan aplikasi branding",
+    tone: "Profesional",
+    tags: ["Logo", "Branding", "RuangUsahaKita"],
+    layout: "wide",
+    galleryImageNames: ruangUsahaBrandingGalleryImageNames,
+    ctaLabel: "Lihat selengkapnya",
+    detailPath: ruangUsahaBrandingDetailPath,
+    isHome: true,
+  },
   {
     id: "senyap-short-film",
     imageName: "work-01.webp",
@@ -115,6 +186,7 @@ export const portfolioItems: PortfolioItem[] = [
     tone: "Reflektif",
     tags: ["Editorial", "Kolase", "Tipografi"],
     layout: "panoramic",
+    isHome: true,
   },
   {
     id: "cahaya-di-ujung-jalan",
@@ -193,6 +265,7 @@ export const portfolioItems: PortfolioItem[] = [
     tone: "Urgent",
     tags: ["Campaign", "Awareness", "Editorial"],
     layout: "tall",
+    isHome: true,
   },
   {
     id: "microplastic-awareness-poster",
@@ -234,8 +307,9 @@ const selectPortfolioItems = (ids: readonly string[]) =>
 export const featuredPortfolioItems = selectPortfolioItems(featuredPortfolioIds);
 export const heroPortfolioItems = selectPortfolioItems(heroPortfolioIds);
 export const portfolioArchivePreview = portfolioArchive.slice(0, 7);
+const collectionPortfolioItems = portfolioItems.filter((item) => item.galleryImageNames?.length);
 
-export const portfolioGalleryItems: PortfolioDisplayItem[] = portfolioArchive.map(({ imageName }, index) => {
+const archiveGalleryItems: PortfolioDisplayItem[] = portfolioArchive.map(({ imageName }, index) => {
   const curatedItem = portfolioItemByImageName.get(imageName);
 
   if (curatedItem) {
@@ -252,3 +326,8 @@ export const portfolioGalleryItems: PortfolioDisplayItem[] = portfolioArchive.ma
     layout: "tall",
   };
 });
+
+export const portfolioGalleryItems: PortfolioDisplayItem[] = [
+  ...collectionPortfolioItems,
+  ...archiveGalleryItems,
+];

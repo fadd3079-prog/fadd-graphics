@@ -1,6 +1,7 @@
 import { ArrowUpRight, Instagram, Linkedin, Mail, MessageCircle } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import LoadingLink from "./LoadingLink";
+import { useLanguage } from "../hooks/useLanguage";
 import logoMarkLight from "../assets/branding/fadd-mark-teal.png";
 import logoMarkDark from "../assets/branding/fadd-mark-white-compact.png";
 
@@ -29,6 +30,7 @@ const socialLinks = [
 
 function Footer() {
   const location = useLocation();
+  const { copy } = useLanguage();
   const contactHref = location.pathname === "/" ? "#contact" : "/#contact";
   const servicesHref = location.pathname === "/" ? "#services" : "/#services";
 
@@ -46,32 +48,31 @@ function Footer() {
                 FADD GRAPHICS
               </p>
               <p className="text-[0.92rem] leading-6 text-muted">
-                Studio desain grafis independen dengan pendekatan yang rapi, tenang, dan siap dikembangkan.
+                {copy.footer.description}
               </p>
             </div>
           </div>
 
           <p className="mt-6 max-w-lg text-[0.95rem] leading-7 text-muted">
-            Presentasi brand, materi promosi, dan kebutuhan desain event perlu terlihat kuat tanpa terasa berlebihan.
-            Situs ini dibangun ulang untuk menampilkan kualitas itu secara lebih jelas.
+            {copy.footer.note}
           </p>
         </div>
 
         <div>
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted">
-            Arah cepat
+            {copy.footer.quickLinks}
           </p>
           <div className="mt-4 flex flex-col gap-3 text-[0.84rem] font-semibold uppercase tracking-[0.08em]">
             <LoadingLink href="/portfolio" className="inline-flex items-center gap-2 text-text hover:text-accent">
-              Buka arsip karya
+              {copy.footer.portfolio}
               <ArrowUpRight className="h-4 w-4" />
             </LoadingLink>
             <a href={servicesHref} className="inline-flex items-center gap-2 text-text hover:text-accent">
-              Pelajari layanan
+              {copy.footer.services}
               <ArrowUpRight className="h-4 w-4" />
             </a>
             <LoadingLink href={contactHref} className="inline-flex items-center gap-2 text-text hover:text-accent" loadingDuration={280}>
-              Kirim brief
+              {copy.footer.brief}
               <ArrowUpRight className="h-4 w-4" />
             </LoadingLink>
           </div>
@@ -79,7 +80,7 @@ function Footer() {
 
         <div>
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted">
-            Connect
+            {copy.footer.connect}
           </p>
           <div className="mt-4 flex items-center gap-3">
             {socialLinks.map(({ href, label, icon: Icon }) => (
@@ -99,7 +100,7 @@ function Footer() {
       </div>
 
       <div className="section-shell mt-10 border-t border-line/80 pt-6 text-[0.9rem] text-muted">
-        © {new Date().getFullYear()} FADD GRAPHICS. Rebuilt with a cleaner structure, curated archive, and polished theme system.
+        © {new Date().getFullYear()} {copy.footer.copyright}
       </div>
     </footer>
   );

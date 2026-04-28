@@ -15,7 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import SectionHeading from "../components/SectionHeading";
-import { processSteps, reasons, services } from "../data/site-content";
+import { useLanguage } from "../hooks/useLanguage";
 
 const serviceIcons = {
   identity: PenTool,
@@ -41,20 +41,22 @@ const reasonIcons = {
   structure: Clock3,
 };
 
-function StudioSection() {
+function ServicesProcessSection() {
+  const { copy } = useLanguage();
+
   return (
     <>
       <section id="services" className="section-shell section-space">
         <div className="flex flex-col gap-10">
           <SectionHeading
-            eyebrow="Services"
-            title="Layanan yang relevan untuk studio desain grafis independen."
-            description="Fokus layanan dibangun dari kebutuhan yang paling sering muncul pada brand, organisasi, kampanye, dan kebutuhan publikasi."
+            eyebrow={copy.services.eyebrow}
+            title={copy.services.title}
+            description={copy.services.description}
             align="center"
           />
 
           <div className="grid auto-rows-fr gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {services.map((service) => {
+            {copy.services.items.map((service) => {
               const Icon = serviceIcons[service.key as keyof typeof serviceIcons];
 
               return (
@@ -79,14 +81,14 @@ function StudioSection() {
       <section className="section-shell section-space">
         <div className="flex flex-col gap-10">
           <SectionHeading
-            eyebrow="Process"
-            title="Alur kerja dibuat singkat, jelas, dan tetap fleksibel."
-            description="Proses dibangun untuk mengurangi kebingungan sejak awal, menjaga fokus desain, dan mempermudah revisi yang benar-benar diperlukan."
+            eyebrow={copy.process.eyebrow}
+            title={copy.process.title}
+            description={copy.process.description}
             align="center"
           />
 
           <div className="grid auto-rows-fr gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {processSteps.map((step, index) => {
+            {copy.process.steps.map((step, index) => {
               const Icon = processIcons[step.key as keyof typeof processIcons];
 
               return (
@@ -111,14 +113,14 @@ function StudioSection() {
       <section className="section-shell section-space">
         <div className="flex flex-col gap-10">
           <SectionHeading
-            eyebrow="Why choose FADD GRAPHICS"
-            title="Nilai utamanya ada pada rasa visual, komunikasi, dan ketepatan eksekusi."
-            description="Desain yang baik bukan hanya terlihat menarik, tetapi juga membuat pesan lebih terstruktur dan hasil akhirnya lebih mudah dipakai."
+            eyebrow={copy.reasons.eyebrow}
+            title={copy.reasons.title}
+            description={copy.reasons.description}
             align="center"
           />
 
           <div className="grid auto-rows-fr gap-4 lg:grid-cols-2 2xl:grid-cols-4">
-            {reasons.map((reason) => {
+            {copy.reasons.items.map((reason) => {
               const Icon = reasonIcons[reason.key as keyof typeof reasonIcons];
 
               return (
@@ -140,4 +142,4 @@ function StudioSection() {
   );
 }
 
-export default StudioSection;
+export default ServicesProcessSection;

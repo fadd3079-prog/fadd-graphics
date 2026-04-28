@@ -1,21 +1,23 @@
 import { ArrowUpRight } from "lucide-react";
 import ContactForm from "../components/ContactForm";
 import SectionHeading from "../components/SectionHeading";
-import { contactLinks } from "../data/site-content";
+import { useLanguage } from "../hooks/useLanguage";
 
 function ContactSection() {
+  const { copy } = useLanguage();
+
   return (
     <section id="contact" className="section-shell section-space pb-16 sm:pb-20">
       <div className="grid gap-10 xl:grid-cols-[0.84fr_1.16fr]">
         <div className="space-y-8">
           <SectionHeading
-            eyebrow="Contact"
-            title="Kalau proyeknya sudah cukup jelas, kita bisa mulai dari brief singkat."
-            description="Tulis kebutuhan utamanya di form ini. Setelah itu, Anda bisa langsung melanjutkan diskusi lewat WhatsApp atau email dengan ringkasan yang sudah lebih rapi."
+            eyebrow={copy.contact.eyebrow}
+            title={copy.contact.title}
+            description={copy.contact.description}
           />
 
           <div className="grid gap-4">
-            {contactLinks.map((contact) => (
+            {copy.contact.links.map((contact) => (
               <a
                 key={contact.label}
                 href={contact.href}

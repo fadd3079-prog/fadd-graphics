@@ -122,14 +122,91 @@
     @apply rounded-[2rem] border border-line bg-card shadow-soft;
   }
 
+  .portfolio-masonry {
+    column-count: 1;
+    column-gap: 0.75rem;
+  }
+
+  .portfolio-masonry-item {
+    break-inside: avoid;
+    display: inline-block;
+    margin-bottom: 0.75rem;
+    width: 100%;
+  }
+
+  .portfolio-masonry-card {
+    @apply block w-full overflow-hidden rounded-[1.15rem] border border-line bg-surface text-left shadow-soft;
+  }
+
+  .portfolio-masonry-card img {
+    display: block;
+    height: auto;
+    width: 100%;
+  }
+
+  .portfolio-detail-bento-item {
+    @apply block w-full transition-transform duration-300 ease-premium;
+  }
+
   .editorial-note {
     @apply text-[0.75rem] font-semibold uppercase tracking-[0.18em] text-muted;
+  }
+
+  @media (min-width: 640px) {
+    .portfolio-masonry {
+      column-count: 2;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .portfolio-masonry {
+      column-count: 3;
+      column-gap: 1rem;
+    }
+
+    .portfolio-masonry-item {
+      margin-bottom: 1rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .portfolio-masonry {
+      column-count: 4;
+    }
   }
 }
 
 @layer utilities {
   .section-shell {
     @apply mx-auto w-full max-w-[1280px] px-5 sm:px-7 lg:px-10;
+  }
+
+  .portfolio-shell {
+    @apply max-w-[1280px];
+  }
+
+  @media (min-width: 1024px) {
+    .portfolio-shell {
+      max-width: 1400px;
+      padding-left: 2.5rem;
+      padding-right: 2.5rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .portfolio-shell {
+      max-width: 1480px;
+      padding-left: 3rem;
+      padding-right: 3rem;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .portfolio-shell {
+      max-width: 1540px;
+      padding-left: 3.5rem;
+      padding-right: 3.5rem;
+    }
   }
 
   .section-space {

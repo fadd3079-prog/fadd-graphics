@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { maintenanceNotice } from "../data/site-content";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
+import { useLanguage } from "../hooks/useLanguage";
 
 const storageKey = "fadd-maintenance-notice-dismissed";
 
@@ -15,6 +15,8 @@ function dismissNoticeForSession() {
 function FirstVisitNotice() {
   const [isVisible, setIsVisible] = useState(false);
   const dismissButtonRef = useRef<HTMLButtonElement | null>(null);
+  const { copy } = useLanguage();
+  const maintenanceNotice = copy.maintenanceNotice;
 
   const dismiss = useCallback(() => {
     dismissNoticeForSession();
