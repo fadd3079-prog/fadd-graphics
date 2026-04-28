@@ -13,8 +13,8 @@ const socialLinks = [
   },
   {
     label: "Email",
-    value: "fadd3079@gmail.com",
-    href: "mailto:fadd3079@gmail.com",
+    value: "faddgraphics@gmail.com",
+    href: "mailto:faddgraphics@gmail.com",
   },
   {
     label: "Instagram",
