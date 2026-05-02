@@ -18,9 +18,9 @@ function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
       title={isDark ? "Aktifkan mode terang" : "Aktifkan mode gelap"}
     >
       {isDark ? (
-        <Sun className="h-[1.125rem] w-[1.125rem]" />
+        <Sun className="h-5 w-5" />
       ) : (
-        <Moon className="h-[1.125rem] w-[1.125rem]" />
+        <Moon className="h-5 w-5" />
       )}
     </button>
   );

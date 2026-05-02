@@ -26,7 +26,7 @@ function BackToTop() {
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       className="surface-panel fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-card hover:border-accent/35 hover:text-accent"
     >
-      <ArrowUp className="h-[1.125rem] w-[1.125rem]" />
+      <ArrowUp className="h-5 w-5" />
     </button>
   );
 }

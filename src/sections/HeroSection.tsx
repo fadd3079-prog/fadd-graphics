@@ -1,6 +1,8 @@
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { useMemo } from "react";
+import { ArrowUpRight, Send } from "lucide-react";
 import LoadingLink from "../components/LoadingLink";
 import { getPortfolioImageSource } from "../data/portfolio";
+import { useCriticalImages } from "../hooks/useCriticalImages";
 import { usePublishedPortfolioItems } from "../hooks/usePublishedPortfolioItems";
 import { useLanguage } from "../hooks/useLanguage";
 import logoMark from "../assets/branding/fadd-mark-teal.png";
@@ -10,6 +12,14 @@ function HeroSection() {
   const { copy } = useLanguage();
   const hero = copy.hero;
   const [primaryItem, teaserItem] = curatedItems.filter((item) => item.isHome).slice(0, 2);
+  const criticalHeroSources = useMemo(
+    () => [primaryItem, teaserItem].filter(Boolean).map((item) => getPortfolioImageSource(item)),
+    [primaryItem, teaserItem],
+  );
+  const isHeroPreviewReady = useCriticalImages(criticalHeroSources, {
+    enabled: criticalHeroSources.length > 0,
+    timeout: 1000,
+  });
 
   return (
     <section id="hero" className="section-shell pt-28 sm:pt-32 lg:pt-36">
@@ -34,7 +44,7 @@ function HeroSection() {
             </LoadingLink>
             <LoadingLink href="#contact" className="button-secondary" loadingDuration={280}>
               {hero.briefCta}
-              <ArrowDownRight className="h-4 w-4" />
+              <Send className="h-4 w-4" />
             </LoadingLink>
           </div>
 
@@ -42,7 +52,7 @@ function HeroSection() {
             {hero.stats.map((stat, index) => (
               <div key={stat.label} className={index === 0 ? "" : "sm:border-l sm:border-line/80 sm:pl-5"}>
                 <p className="text-[1.85rem] font-extrabold tracking-[-0.05em] text-text">{stat.value}</p>
-                <p className="mt-1.5 text-[0.82rem] font-medium uppercase tracking-[0.08em] text-muted">
+                <p className="mt-1.5 text-[0.82rem] font-medium uppercase tracking-[0.045em] text-muted">
                   {stat.label}
                 </p>
               </div>
@@ -72,17 +82,22 @@ function HeroSection() {
                         <p className="text-[0.9rem] font-semibold tracking-[-0.02em] text-text">{hero.teaserTitle}</p>
                       </div>
                     </div>
-                    <span className="rounded-full border border-lineStrong/70 px-3 py-1.5 text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-muted">
+                    <span className="rounded-full border border-lineStrong/70 px-3 py-1.5 text-[0.66rem] font-semibold uppercase tracking-[0.055em] text-muted">
                       {hero.teaserBadge}
                     </span>
                   </div>
 
                   <div className="aspect-[6/5] overflow-hidden border-b border-line/80 bg-card">
-                    <img
-                      src={getPortfolioImageSource(primaryItem)}
-                      alt={primaryItem.title}
-                      className="h-full w-full object-cover"
-                    />
+                    {isHeroPreviewReady ? (
+                      <img
+                        src={getPortfolioImageSource(primaryItem)}
+                        alt={primaryItem.title}
+                        className="h-full w-full object-cover"
+                        decoding="async"
+                      />
+                    ) : (
+                      <div className="h-full w-full animate-pulse bg-surface" />
+                    )}
                   </div>
 
                   <div className="grid gap-4 p-4">
@@ -98,11 +113,16 @@ function HeroSection() {
                       {teaserItem ? (
                         <>
                           <div className="overflow-hidden rounded-[0.9rem] border border-line/80">
-                            <img
-                              src={getPortfolioImageSource(teaserItem)}
-                              alt={teaserItem.title}
-                              className="aspect-[4/5] w-full object-cover"
-                            />
+                            {isHeroPreviewReady ? (
+                              <img
+                                src={getPortfolioImageSource(teaserItem)}
+                                alt={teaserItem.title}
+                                className="aspect-[4/5] w-full object-cover"
+                                decoding="async"
+                              />
+                            ) : (
+                              <div className="aspect-[4/5] w-full animate-pulse bg-surface" />
+                            )}
                           </div>
                           <div className="min-w-0">
                             <p className="editorial-note">{hero.teaserOther}</p>

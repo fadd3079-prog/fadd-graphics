@@ -10,21 +10,23 @@ import { useLanguage } from "../hooks/useLanguage";
 type PortfolioMasonryProps = {
   items: PortfolioDisplayItem[];
   onSelect: (item: PortfolioDisplayItem) => void;
+  priorityCount?: number;
 };
 
-function PortfolioMasonry({ items, onSelect }: PortfolioMasonryProps) {
+function PortfolioMasonry({ items, onSelect, priorityCount = 0 }: PortfolioMasonryProps) {
   const { copy } = useLanguage();
 
-  const renderCardContent = (item: PortfolioDisplayItem) => (
+  const renderCardContent = (item: PortfolioDisplayItem, index: number) => (
     <>
       <img
         src={getPortfolioImageSource(item)}
         alt={item.title}
         className="block h-auto w-full transition duration-300 ease-premium group-hover:scale-[1.01]"
-        loading="lazy"
+        loading={index < priorityCount ? "eager" : "lazy"}
+        decoding="async"
       />
       <div className="flex items-center justify-between gap-3 px-3 py-2.5">
-        <span className="truncate text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted">
+        <span className="truncate text-[0.68rem] font-semibold uppercase tracking-[0.055em] text-muted">
           {item.ctaLabel ?? item.deliverable ?? copy.portfolio.cardFallback}
         </span>
         <ArrowUpRight className="h-4 w-4 shrink-0 text-muted transition group-hover:text-accent" />
@@ -32,14 +34,14 @@ function PortfolioMasonry({ items, onSelect }: PortfolioMasonryProps) {
     </>
   );
 
-  const renderCard = (item: PortfolioDisplayItem) => {
+  const renderCard = (item: PortfolioDisplayItem, index: number) => {
     const cardClassName = "portfolio-masonry-card group";
     const detailPath = getPortfolioDetailPath(item);
 
     if (detailPath) {
       return (
         <LoadingLink key={item.id} href={detailPath} className={cardClassName}>
-          {renderCardContent(item)}
+          {renderCardContent(item, index)}
         </LoadingLink>
       );
     }
@@ -51,16 +53,16 @@ function PortfolioMasonry({ items, onSelect }: PortfolioMasonryProps) {
         className={cardClassName}
         onClick={() => onSelect(item)}
       >
-        {renderCardContent(item)}
+        {renderCardContent(item, index)}
       </button>
     );
   };
 
   return (
     <div className="portfolio-masonry">
-      {items.map((item) => (
+      {items.map((item, index) => (
         <div key={item.id} className="portfolio-masonry-item">
-          {renderCard(item)}
+          {renderCard(item, index)}
         </div>
       ))}
     </div>

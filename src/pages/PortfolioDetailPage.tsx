@@ -8,6 +8,7 @@ import {
   getPortfolioImageSource,
   hasPortfolioGallery,
 } from "../data/portfolio";
+import { useCriticalImages } from "../hooks/useCriticalImages";
 import { usePublishedPortfolioItems } from "../hooks/usePublishedPortfolioItems";
 import { useLanguage } from "../hooks/useLanguage";
 
@@ -197,6 +198,18 @@ function PortfolioDetailBentoGallery({
   );
 }
 
+function PortfolioDetailSkeleton() {
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      <div className="min-h-[24rem] animate-pulse rounded-[1.15rem] border border-line bg-surface lg:col-span-2" />
+      <div className="grid gap-4">
+        <div className="min-h-[11rem] animate-pulse rounded-[1.15rem] border border-line bg-surface" />
+        <div className="min-h-[11rem] animate-pulse rounded-[1.15rem] border border-line bg-surface" />
+      </div>
+    </div>
+  );
+}
+
 function PortfolioDetailPage() {
   const { portfolioSlug } = useParams();
   const { galleryItems, isLoading } = usePublishedPortfolioItems();
@@ -207,6 +220,23 @@ function PortfolioDetailPage() {
 
     return portfolioItem.slug === portfolioSlug || routeSlug === portfolioSlug || portfolioItem.id === portfolioSlug;
   });
+  const hasDetailGallery = item ? hasPortfolioGallery(item) : false;
+  const gallerySources = useMemo(
+    () => (item && hasDetailGallery ? getPortfolioGallerySources(item) : []),
+    [hasDetailGallery, item],
+  );
+  const mainSource = useMemo(
+    () => (item && hasDetailGallery ? getPortfolioImageSource(item) : ""),
+    [hasDetailGallery, item],
+  );
+  const criticalImageSources = useMemo(
+    () => [mainSource, ...gallerySources.slice(0, 2)].filter(Boolean),
+    [gallerySources, mainSource],
+  );
+  const isDetailReady = useCriticalImages(criticalImageSources, {
+    enabled: !isLoading && Boolean(item && hasDetailGallery),
+    timeout: 1400,
+  });
 
   if (isLoading) {
     return (
@@ -216,12 +246,9 @@ function PortfolioDetailPage() {
     );
   }
 
-  if (!item || !hasPortfolioGallery(item)) {
+  if (!item || !hasDetailGallery) {
     return <Navigate to="/portfolio" replace />;
   }
-
-  const gallerySources = getPortfolioGallerySources(item);
-  const mainSource = getPortfolioImageSource(item);
 
   return (
     <section className="section-shell portfolio-shell pb-16 pt-28 sm:pb-20 sm:pt-32 lg:pt-36">
@@ -239,11 +266,15 @@ function PortfolioDetailPage() {
       </div>
 
       <div className="mx-auto mt-10 grid max-w-[94rem] gap-5">
-        <PortfolioDetailBentoGallery
-          mainSource={mainSource}
-          title={item.title}
-          gallerySources={gallerySources}
-        />
+        {isDetailReady ? (
+          <PortfolioDetailBentoGallery
+            mainSource={mainSource}
+            title={item.title}
+            gallerySources={gallerySources}
+          />
+        ) : (
+          <PortfolioDetailSkeleton />
+        )}
 
         <aside className="section-frame grid gap-4 rounded-[1.35rem] p-5 sm:grid-cols-3 sm:p-6">
           <div>

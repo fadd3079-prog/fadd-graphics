@@ -62,7 +62,7 @@ function PortfolioSection() {
                 <div className="flex items-center justify-between gap-3">
                   <span className="editorial-note">{primaryFeaturedItem.deliverable ?? portfolioCopy.fallbackDeliverable}</span>
                   {primaryFeaturedItem.tone ? (
-                    <span className="rounded-full border border-lineStrong/70 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted">
+                    <span className="rounded-full border border-lineStrong/70 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.055em] text-muted">
                       {primaryFeaturedItem.tone}
                     </span>
                   ) : null}
@@ -123,7 +123,7 @@ function PortfolioSection() {
                         setActiveCategory(category.id as PortfolioCategory | "all"),
                       )
                     }
-                    className={`rounded-full px-4 py-2 text-[0.74rem] font-semibold uppercase tracking-[0.08em] ${
+                    className={`rounded-full px-4 py-2 text-[0.74rem] font-semibold uppercase tracking-[0.045em] ${
                       isActive
                         ? "bg-text text-bg"
                         : "border border-lineStrong/60 bg-surface text-text hover:border-accent/35 hover:text-accent"
@@ -166,7 +166,7 @@ function PortfolioSection() {
                 {portfolioCopy.archiveDescription}
               </p>
             </div>
-            <LoadingLink href="/portfolio" className="inline-flex items-center gap-2 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text hover:text-accent">
+            <LoadingLink href="/portfolio" className="inline-flex items-center gap-2 text-[0.82rem] font-semibold uppercase tracking-[0.045em] text-text hover:text-accent">
               {portfolioCopy.archiveCta}
               <ArrowUpRight className="h-4 w-4" />
             </LoadingLink>

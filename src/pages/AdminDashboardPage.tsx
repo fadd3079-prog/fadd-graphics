@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { ArrowDown, ArrowUp, LogOut, Pencil, Plus, Trash2, Upload, X } from "lucide-react";
+import { ChevronDown, ChevronUp, LogOut, Plus, Save, SquarePen, Trash2, Upload, X } from "lucide-react";
 import { useAdminAuth } from "../hooks/useAdminAuth";
 import {
   createDefaultPortfolioFormState,
@@ -394,7 +394,7 @@ function AdminDashboardPage() {
             {isSaving ? (
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-bg/50 border-t-bg" />
             ) : (
-              <Pencil className="h-4 w-4" />
+              <Save className="h-4 w-4" />
             )}
             Simpan portfolio
           </button>
@@ -452,7 +452,7 @@ function AdminDashboardPage() {
                     <p className="mt-1 truncate text-[0.88rem] leading-6 text-muted">{item.slug}</p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button type="button" className="button-secondary" onClick={() => handleEdit(item)}>
-                        <Pencil className="h-4 w-4" />
+                        <SquarePen className="h-4 w-4" />
                         Edit
                       </button>
                       <button
@@ -461,7 +461,7 @@ function AdminDashboardPage() {
                         onClick={() => handleMoveItem(index, -1)}
                         disabled={index === 0}
                       >
-                        <ArrowUp className="h-4 w-4" />
+                        <ChevronUp className="h-4 w-4" />
                         Up
                       </button>
                       <button
@@ -470,7 +470,7 @@ function AdminDashboardPage() {
                         onClick={() => handleMoveItem(index, 1)}
                         disabled={index === items.length - 1}
                       >
-                        <ArrowDown className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4" />
                         Down
                       </button>
                       <button type="button" className="button-secondary" onClick={() => handleDelete(item)}>

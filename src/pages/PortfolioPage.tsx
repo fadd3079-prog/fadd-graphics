@@ -1,18 +1,43 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import PortfolioMasonry from "../components/PortfolioMasonry";
 import PortfolioModal from "../components/PortfolioModal";
 import SectionHeading from "../components/SectionHeading";
-import type { PortfolioDisplayItem } from "../data/portfolio";
+import { getPortfolioImageSource, type PortfolioDisplayItem } from "../data/portfolio";
+import { useCriticalImages } from "../hooks/useCriticalImages";
 import { usePublishedPortfolioItems } from "../hooks/usePublishedPortfolioItems";
 import { useLanguage } from "../hooks/useLanguage";
+
+const priorityPortfolioImageCount = 8;
+
+function PortfolioGallerySkeleton() {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: priorityPortfolioImageCount }).map((_, index) => (
+        <div
+          key={index}
+          className="min-h-[12rem] animate-pulse rounded-[1.15rem] border border-line bg-surface"
+        />
+      ))}
+    </div>
+  );
+}
 
 function PortfolioPage() {
   const [selectedItem, setSelectedItem] = useState<PortfolioDisplayItem | null>(null);
   const { galleryItems, isLoading, error } = usePublishedPortfolioItems();
   const { copy } = useLanguage();
   const pageCopy = copy.portfolio.page;
+  const criticalImageSources = useMemo(
+    () => galleryItems.slice(0, priorityPortfolioImageCount).map(getPortfolioImageSource),
+    [galleryItems],
+  );
+  const isGalleryReady = useCriticalImages(criticalImageSources, {
+    enabled: !isLoading && galleryItems.length > 0,
+    timeout: 1400,
+  });
+  const shouldShowGallery = !isLoading && isGalleryReady;
 
   return (
     <section className="section-shell portfolio-shell pb-16 pt-28 sm:pb-20 sm:pt-32 lg:pt-36">
@@ -41,12 +66,14 @@ function PortfolioPage() {
             {pageCopy.fallbackNotice}
           </p>
         ) : null}
-        {isLoading ? (
-          <div className="flex min-h-[16rem] items-center justify-center">
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-lineStrong border-t-accent" />
-          </div>
+        {!shouldShowGallery ? (
+          <PortfolioGallerySkeleton />
         ) : (
-          <PortfolioMasonry items={galleryItems} onSelect={setSelectedItem} />
+          <PortfolioMasonry
+            items={galleryItems}
+            onSelect={setSelectedItem}
+            priorityCount={priorityPortfolioImageCount}
+          />
         )}
       </div>
 

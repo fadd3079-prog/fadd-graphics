@@ -137,7 +137,7 @@ function PortfolioModal({ item, onClose }: PortfolioModalProps) {
                 {item.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full border border-lineStrong/65 bg-card px-2.5 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-text"
+                    className="rounded-full border border-lineStrong/65 bg-card px-2.5 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.045em] text-text"
                   >
                     {tag}
                   </span>

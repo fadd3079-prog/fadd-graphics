@@ -22,9 +22,9 @@ const config: Config = {
         display: ["Inter Variable", "Inter", "sans-serif"],
       },
       boxShadow: {
-        soft: "0 10px 30px rgba(15, 23, 42, 0.06)",
-        lift: "0 24px 60px rgba(15, 23, 42, 0.12)",
-        edge: "0 0 0 1px rgba(148, 163, 184, 0.08), 0 18px 48px rgba(15, 23, 42, 0.08)",
+        soft: "0 12px 36px rgba(15, 15, 15, 0.06)",
+        lift: "0 26px 70px rgba(15, 15, 15, 0.16)",
+        edge: "0 0 0 1px rgba(130, 120, 104, 0.12), 0 20px 58px rgba(15, 15, 15, 0.11)",
       },
       borderRadius: {
         "4xl": "2rem",

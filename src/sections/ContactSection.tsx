@@ -1,7 +1,15 @@
 import { ArrowUpRight } from "lucide-react";
 import ContactForm from "../components/ContactForm";
 import SectionHeading from "../components/SectionHeading";
+import SocialIcon, { type SocialIconName } from "../components/SocialIcon";
 import { useLanguage } from "../hooks/useLanguage";
+
+const contactIcons = {
+  WhatsApp: "whatsapp",
+  Email: "email",
+  Instagram: "instagram",
+  LinkedIn: "linkedin",
+} satisfies Record<string, SocialIconName>;
 
 function ContactSection() {
   const { copy } = useLanguage();
@@ -17,23 +25,32 @@ function ContactSection() {
           />
 
           <div className="grid gap-4">
-            {copy.contact.links.map((contact) => (
-              <a
-                key={contact.label}
-                href={contact.href}
-                target={contact.href.startsWith("http") ? "_blank" : undefined}
-                rel={contact.href.startsWith("http") ? "noreferrer" : undefined}
-                className="section-frame rounded-[1.45rem] p-5 hover:border-lineStrong/80"
-              >
-                <p className="editorial-note">
-                  {contact.label}
-                </p>
-                <div className="mt-3 flex items-center justify-between gap-4">
-                  <p className="text-[1rem] font-semibold tracking-[-0.02em] text-text">{contact.value}</p>
-                  <ArrowUpRight className="h-4 w-4 text-muted" />
-                </div>
-              </a>
-            ))}
+            {copy.contact.links.map((contact) => {
+              const icon = contactIcons[contact.label as keyof typeof contactIcons] ?? "email";
+
+              return (
+                <a
+                  key={contact.label}
+                  href={contact.href}
+                  target={contact.href.startsWith("http") ? "_blank" : undefined}
+                  rel={contact.href.startsWith("http") ? "noreferrer" : undefined}
+                  className="section-frame rounded-[1.45rem] p-5 hover:border-lineStrong/80"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="icon-frame">
+                      <SocialIcon name={icon} className="h-5 w-5" />
+                    </span>
+                    <p className="editorial-note">
+                      {contact.label}
+                    </p>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between gap-4">
+                    <p className="text-[1rem] font-semibold tracking-[-0.02em] text-text">{contact.value}</p>
+                    <ArrowUpRight className="h-4 w-4 shrink-0 text-muted" />
+                  </div>
+                </a>
+              );
+            })}
           </div>
         </div>
 

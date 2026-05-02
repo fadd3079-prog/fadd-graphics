@@ -43,7 +43,7 @@ export const siteCopy = {
       { label: "Profile", kind: "section", target: "profile" },
       { label: "Portfolio", kind: "page", target: "/portfolio" },
       { label: "Services", kind: "section", target: "services" },
-      { label: "About", kind: "section", target: "about" },
+      { label: "About", kind: "page", target: "/about" },
       { label: "Contact", kind: "section", target: "contact" },
     ],
     header: {
@@ -276,6 +276,12 @@ export const siteCopy = {
       title: "Mufaddhol, freelance graphic designer di balik FADD GRAPHICS.",
       description:
         "FADD GRAPHICS saya gunakan sebagai ruang portfolio pribadi sekaligus identitas layanan desain visual.",
+      readMore: "Lihat selengkapnya",
+      backHome: "Kembali ke beranda",
+      detailEyebrow: "Profil lengkap",
+      detailTitle: "Pengalaman visual, organisasi, dan teknologi yang membentuk cara kerja saya.",
+      detailDescription:
+        "Halaman ini merangkum latar belakang, pengalaman, pendidikan, dan skill yang relevan dengan pekerjaan desain grafis saya.",
       portraitAlt: "Mufaddhol, founder FADD GRAPHICS",
       body: [
         "Saya mengerjakan desain grafis untuk logo, poster, social media content, publikasi event, dan kebutuhan visual organisasi. Cara kerja saya dimulai dari brief yang jelas, lalu diterjemahkan menjadi visual yang rapi dan bisa digunakan.",
@@ -288,6 +294,7 @@ export const siteCopy = {
         "Terbuka untuk project brand, komunitas, event, edukasi, dan promosi.",
       ],
       experienceEyebrow: "Experience",
+      experienceTitle: "Pengalaman kerja dan organisasi",
       educationEyebrow: "Education",
       skillsEyebrow: "Skills",
       skillNote: "Level skill ditulis apa adanya agar ekspektasi tetap realistis.",
@@ -534,7 +541,7 @@ export const siteCopy = {
       { label: "Profile", kind: "section", target: "profile" },
       { label: "Portfolio", kind: "page", target: "/portfolio" },
       { label: "Services", kind: "section", target: "services" },
-      { label: "About", kind: "section", target: "about" },
+      { label: "About", kind: "page", target: "/about" },
       { label: "Contact", kind: "section", target: "contact" },
     ],
     header: {
@@ -767,6 +774,12 @@ export const siteCopy = {
       title: "Mufaddhol, the freelance graphic designer behind FADD GRAPHICS.",
       description:
         "I use FADD GRAPHICS as my personal portfolio space and visual design service identity.",
+      readMore: "Read more",
+      backHome: "Back to home",
+      detailEyebrow: "Full profile",
+      detailTitle: "Visual, organizational, and technology experience shape how I work.",
+      detailDescription:
+        "This page summarizes the background, experience, education, and skills that support my graphic design work.",
       portraitAlt: "Mufaddhol, founder of FADD GRAPHICS",
       body: [
         "I work on graphic design projects such as logos, posters, social media content, event publication, and organizational visual needs. My process starts from a clear brief, then turns it into usable visual output.",
@@ -779,6 +792,7 @@ export const siteCopy = {
         "Open to projects for brands, communities, events, education, and promotion.",
       ],
       experienceEyebrow: "Experience",
+      experienceTitle: "Work and organization experience",
       educationEyebrow: "Education",
       skillsEyebrow: "Skills",
       skillNote: "Skill levels are written plainly so expectations stay realistic.",

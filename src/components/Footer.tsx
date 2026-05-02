@@ -1,6 +1,7 @@
-import { ArrowUpRight, Instagram, Linkedin, Mail, MessageCircle } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import LoadingLink from "./LoadingLink";
+import SocialIcon, { type SocialIconName } from "./SocialIcon";
 import { useLanguage } from "../hooks/useLanguage";
 import logoMarkLight from "../assets/branding/fadd-mark-teal.png";
 import logoMarkDark from "../assets/branding/fadd-mark-white-compact.png";
@@ -9,24 +10,24 @@ const socialLinks = [
   {
     label: "WhatsApp",
     href: "https://wa.me/6283150964050",
-    icon: MessageCircle,
+    icon: "whatsapp",
   },
   {
     label: "Instagram",
     href: "https://instagram.com/fadd_graphics",
-    icon: Instagram,
+    icon: "instagram",
   },
   {
     label: "LinkedIn",
     href: "https://www.linkedin.com/in/mufaddhol-01b60333a/",
-    icon: Linkedin,
+    icon: "linkedin",
   },
   {
     label: "Email",
-    href: "mailto:fadd3079@gmail.com",
-    icon: Mail,
+    href: "mailto:faddgraphics@gmail.com",
+    icon: "email",
   },
-];
+] satisfies { label: string; href: string; icon: SocialIconName }[];
 
 function Footer() {
   const location = useLocation();
@@ -44,7 +45,7 @@ function Footer() {
               <img src={logoMarkDark} alt="FADD GRAPHICS" className="hidden h-7 w-7 dark:block" />
             </span>
             <div>
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-muted">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.055em] text-muted">
                 FADD GRAPHICS
               </p>
               <p className="text-[0.92rem] leading-6 text-muted">
@@ -59,10 +60,10 @@ function Footer() {
         </div>
 
         <div>
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted">
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.055em] text-muted">
             {copy.footer.quickLinks}
           </p>
-          <div className="mt-4 flex flex-col gap-3 text-[0.84rem] font-semibold uppercase tracking-[0.08em]">
+          <div className="mt-4 flex flex-col gap-3 text-[0.84rem] font-semibold uppercase tracking-[0.045em]">
             <LoadingLink href="/portfolio" className="inline-flex items-center gap-2 text-text hover:text-accent">
               {copy.footer.portfolio}
               <ArrowUpRight className="h-4 w-4" />
@@ -79,20 +80,20 @@ function Footer() {
         </div>
 
         <div>
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted">
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.055em] text-muted">
             {copy.footer.connect}
           </p>
           <div className="mt-4 flex items-center gap-3">
-            {socialLinks.map(({ href, label, icon: Icon }) => (
+            {socialLinks.map(({ href, label, icon }) => (
               <a
                 key={label}
                 href={href}
                 target={href.startsWith("http") ? "_blank" : undefined}
                 rel={href.startsWith("http") ? "noreferrer" : undefined}
                 aria-label={label}
-                className="surface-panel flex h-11 w-11 items-center justify-center rounded-full bg-card hover:border-accent/35 hover:text-accent"
+                className="icon-frame rounded-full bg-card hover:border-accent/55 hover:bg-accentSoft hover:text-accentStrong"
               >
-                <Icon className="h-[1.125rem] w-[1.125rem]" />
+                <SocialIcon name={icon} className="h-5 w-5" />
               </a>
             ))}
           </div>

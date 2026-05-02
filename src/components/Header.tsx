@@ -50,7 +50,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
               <img src={logoMarkDark} alt="FADD GRAPHICS" className="hidden h-7 w-7 dark:block" />
             </span>
             <span className="hidden sm:block">
-              <span className="block text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-muted">
+              <span className="block text-[0.68rem] font-semibold uppercase tracking-[0.055em] text-muted">
                 {copy.header.tagline}
               </span>
               <span className="block text-[0.92rem] font-bold tracking-[-0.03em] text-text">
@@ -65,7 +65,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
                 <LoadingLink
                   key={item.label}
                   href={item.target}
-                  className={`rounded-full px-3.5 py-2 text-[0.78rem] font-semibold uppercase tracking-[0.08em] ${
+                  className={`rounded-full px-3.5 py-2 text-[0.78rem] font-semibold uppercase tracking-[0.045em] ${
                     location.pathname === item.target ? "bg-card text-text" : "text-muted hover:bg-card hover:text-text"
                   }`}
                 >
@@ -75,7 +75,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
                 <a
                   key={item.label}
                   href={isHomePage ? `#${item.target}` : `/#${item.target}`}
-                  className="rounded-full px-3.5 py-2 text-[0.78rem] font-semibold uppercase tracking-[0.08em] text-muted hover:bg-card hover:text-text"
+                  className="rounded-full px-3.5 py-2 text-[0.78rem] font-semibold uppercase tracking-[0.045em] text-muted hover:bg-card hover:text-text"
                 >
                   {item.label}
                 </a>
@@ -92,7 +92,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
                 <button
                   key={item}
                   type="button"
-                  className={`rounded-full px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.1em] ${
+                  className={`rounded-full px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.055em] ${
                     language === item ? "bg-text text-bg" : "text-muted hover:text-text"
                   }`}
                   onClick={() => setLanguage(item)}
@@ -127,7 +127,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
                   <button
                     key={item}
                     type="button"
-                    className={`flex-1 rounded-full px-3 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.1em] ${
+                    className={`flex-1 rounded-full px-3 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.055em] ${
                       language === item ? "bg-text text-bg" : "text-muted"
                     }`}
                     onClick={() => setLanguage(item)}
@@ -141,7 +141,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
                   <LoadingLink
                     key={item.label}
                     href={item.target}
-                    className="rounded-[1.1rem] border border-line/60 bg-card px-4 py-3 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text hover:border-lineStrong/80"
+                    className="rounded-[1.1rem] border border-line/60 bg-card px-4 py-3 text-[0.82rem] font-semibold uppercase tracking-[0.045em] text-text hover:border-lineStrong/80"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {item.label}
@@ -150,7 +150,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
                   <a
                     key={item.label}
                     href={isHomePage ? `#${item.target}` : `/#${item.target}`}
-                    className="rounded-[1.1rem] border border-line/60 bg-card px-4 py-3 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text hover:border-lineStrong/80"
+                    className="rounded-[1.1rem] border border-line/60 bg-card px-4 py-3 text-[0.82rem] font-semibold uppercase tracking-[0.045em] text-text hover:border-lineStrong/80"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {item.label}

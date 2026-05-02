@@ -1,18 +1,19 @@
 import {
   BadgeCheck,
-  Clock3,
+  Clock,
+  DraftingCompass,
   FileText,
   Image,
-  Lightbulb,
+  Layers3,
   MessageSquare,
   Megaphone,
   Package,
   Palette,
+  PencilRuler,
   PenTool,
   RefreshCcw,
   Send,
   Shirt,
-  Sparkles,
 } from "lucide-react";
 import SectionHeading from "../components/SectionHeading";
 import { useLanguage } from "../hooks/useLanguage";
@@ -23,13 +24,13 @@ const serviceIcons = {
   social: Image,
   print: Package,
   merch: Shirt,
-  custom: Sparkles,
+  custom: PencilRuler,
 };
 
 const processIcons = {
   consultation: MessageSquare,
   brief: FileText,
-  concept: Lightbulb,
+  concept: DraftingCompass,
   revision: RefreshCcw,
   delivery: Send,
 };
@@ -38,7 +39,7 @@ const reasonIcons = {
   taste: Palette,
   communication: MessageSquare,
   flexibility: BadgeCheck,
-  structure: Clock3,
+  structure: Clock,
 };
 
 function ServicesProcessSection() {
@@ -93,7 +94,7 @@ function ServicesProcessSection() {
 
               return (
                 <article key={step.title} className="section-frame flex h-full flex-col rounded-[1.65rem] p-6">
-                  <span className="text-[0.8rem] font-semibold uppercase tracking-[0.12em] text-accent">
+                  <span className="text-[0.8rem] font-semibold uppercase tracking-[0.055em] text-accent">
                     {`0${index + 1}`}
                   </span>
                   <div className="mt-4 flex h-11 w-11 items-center justify-center rounded-[0.95rem] border border-line/80 bg-surface text-accentStrong dark:text-accent">

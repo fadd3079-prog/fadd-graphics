@@ -11,7 +11,7 @@ type LoadingLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & 
 function LoadingLink({
   children,
   href,
-  loadingDuration = 360,
+  loadingDuration = 180,
   onClick,
   ...props
 }: LoadingLinkProps) {

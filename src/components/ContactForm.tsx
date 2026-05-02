@@ -1,4 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { Send } from "lucide-react";
+import SocialIcon from "./SocialIcon";
 import { useLanguage } from "../hooks/useLanguage";
 
 type FormValues = {
@@ -135,7 +137,7 @@ function ContactForm() {
       noValidate
     >
       <div className="grid gap-5 sm:grid-cols-2">
-        <label className="space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text">
+        <label className="space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.045em] text-text">
           <span>{formCopy.fields.name}</span>
           <input
             type="text"
@@ -148,7 +150,7 @@ function ContactForm() {
           {errors.name ? <span className="text-sm text-accentStrong">{errors.name}</span> : null}
         </label>
 
-        <label className="space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text">
+        <label className="space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.045em] text-text">
           <span>{formCopy.fields.email}</span>
           <input
             type="email"
@@ -161,7 +163,7 @@ function ContactForm() {
           {errors.email ? <span className="text-sm text-accentStrong">{errors.email}</span> : null}
         </label>
 
-        <label className="space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text">
+        <label className="space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.045em] text-text">
           <span>{formCopy.fields.service}</span>
           <select value={values.service} onChange={updateField("service")} className={fieldClassName}>
             <option value="">{formCopy.placeholders.service}</option>
@@ -176,7 +178,7 @@ function ContactForm() {
           ) : null}
         </label>
 
-        <label className="space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text">
+        <label className="space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.045em] text-text">
           <span>{formCopy.fields.timeline}</span>
           <select value={values.timeline} onChange={updateField("timeline")} className={fieldClassName}>
             <option value="">{formCopy.placeholders.timeline}</option>
@@ -189,7 +191,7 @@ function ContactForm() {
         </label>
       </div>
 
-      <label className="mt-5 block space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-text">
+      <label className="mt-5 block space-y-2.5 text-[0.82rem] font-semibold uppercase tracking-[0.045em] text-text">
         <span>{formCopy.fields.message}</span>
         <textarea
           value={values.message}
@@ -216,12 +218,14 @@ function ContactForm() {
                 rel="noreferrer"
                 className="button-primary"
               >
+                <SocialIcon name="whatsapp" className="h-4 w-4" />
                 {formCopy.openWhatsapp}
               </a>
               <a
                 href="mailto:fadd3079@gmail.com"
                 className="button-secondary"
               >
+                <SocialIcon name="email" className="h-4 w-4" />
                 {formCopy.sendEmail}
               </a>
             </>
@@ -230,6 +234,7 @@ function ContactForm() {
               type="submit"
               className="button-primary whitespace-nowrap"
             >
+              <Send className="h-4 w-4" />
               {formCopy.submit}
             </button>
           )}
