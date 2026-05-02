@@ -28,6 +28,7 @@ function PortfolioMasonry({ items, onSelect, priorityCount = 0 }: PortfolioMason
             className="block h-auto w-full transition duration-300 ease-premium group-hover:scale-[1.01]"
             loading={index < priorityCount ? "eager" : "lazy"}
             decoding="async"
+            sizes="(min-width: 1536px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 46vw, 100vw"
           />
         ) : (
           <div className="flex min-h-[12rem] items-center justify-center bg-card px-4 text-center">

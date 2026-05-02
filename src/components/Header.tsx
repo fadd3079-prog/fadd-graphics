@@ -26,7 +26,18 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
   useBodyScrollLock(isMenuOpen);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 24);
+    let lastScrolled = window.scrollY > 24;
+
+    setIsScrolled(lastScrolled);
+
+    const handleScroll = () => {
+      const nextScrolled = window.scrollY > 24;
+
+      if (nextScrolled !== lastScrolled) {
+        lastScrolled = nextScrolled;
+        setIsScrolled(nextScrolled);
+      }
+    };
 
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -41,7 +52,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-4 pt-3">
       <div
-        className={`mx-auto max-w-[1280px] rounded-[1.45rem] border transition-all duration-500 ease-premium ${shellClassName}`}
+        className={`mx-auto max-w-[1220px] rounded-[1.35rem] border transition-all duration-500 ease-premium ${shellClassName}`}
       >
         <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <LoadingLink href="/" className="flex items-center gap-3">

@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useLocation } from "react-router-dom";
 import { useLanguage } from "../hooks/useLanguage";
 
 type UiLoadingContextValue = {
@@ -17,10 +18,12 @@ type UiLoadingContextValue = {
 const UiLoadingContext = createContext<UiLoadingContextValue | null>(null);
 
 function UiLoadingProvider({ children }: { children: ReactNode }) {
+  const location = useLocation();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loadingTaskCount, setLoadingTaskCount] = useState(0);
   const { copy } = useLanguage();
-  const isLoading = isInitialLoading || loadingTaskCount > 0;
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isLoading = !isAdminRoute && (isInitialLoading || loadingTaskCount > 0);
 
   useEffect(() => {
     let finishDelayId: number | null = null;
@@ -79,7 +82,7 @@ function UiLoadingProvider({ children }: { children: ReactNode }) {
 
   return (
     <UiLoadingContext.Provider value={value}>
-      <div className={`transition-opacity duration-300 ease-premium ${isInitialLoading ? "opacity-0" : "opacity-100"}`}>
+      <div className={`transition-opacity duration-300 ease-premium ${!isAdminRoute && isInitialLoading ? "opacity-0" : "opacity-100"}`}>
         {children}
       </div>
       <div

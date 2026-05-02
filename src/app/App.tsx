@@ -23,26 +23,15 @@ const PortfolioDetailPage = lazy(loadPortfolioDetailPage);
 const PortfolioPage = lazy(loadPortfolioPage);
 
 function RouteFallback({ isAdminRoute }: { isAdminRoute: boolean }) {
-  return <PageLoadingGate className={isAdminRoute ? "min-h-screen" : "section-shell min-h-[56vh] pt-28"} />;
+  if (isAdminRoute) {
+    return <section className="min-h-screen bg-bg" aria-hidden="true" />;
+  }
+
+  return <PageLoadingGate className="section-shell min-h-[56vh] pt-28" />;
 }
 
-function App() {
-  const { theme, toggleTheme } = useTheme();
-  const { copy } = useLanguage();
+function PublicSiteMetadata() {
   const siteAssets = useResolvedSiteAssets();
-  const location = useLocation();
-  const isAdminRoute = location.pathname.startsWith("/admin");
-
-  useLayoutEffect(() => {
-    setManualScrollRestoration();
-
-    if (location.hash) {
-      void waitForHashTarget(location.hash);
-      return;
-    }
-
-    jumpToTop();
-  }, [location.key, location.pathname, location.hash]);
 
   useEffect(() => {
     if (siteAssets.favicon?.url) {
@@ -59,8 +48,29 @@ function App() {
     }
   }, [siteAssets.favicon?.url, siteAssets.ogImage?.url]);
 
+  return null;
+}
+
+function App() {
+  const { theme, toggleTheme } = useTheme();
+  const { copy } = useLanguage();
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
+  useLayoutEffect(() => {
+    setManualScrollRestoration();
+
+    if (location.hash) {
+      void waitForHashTarget(location.hash);
+      return;
+    }
+
+    jumpToTop();
+  }, [location.key, location.pathname, location.hash]);
+
   return (
-    <div className={`relative isolate min-h-screen overflow-x-hidden ${isAdminRoute ? "bg-bg" : "bg-[linear-gradient(180deg,rgba(255,255,255,0.62),transparent_24%),linear-gradient(180deg,rgba(247,248,249,1),rgba(247,248,249,1))] dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.035),transparent_20%),linear-gradient(180deg,rgba(12,13,15,1),rgba(12,13,15,1))]"}`}>
+    <div className={`relative isolate min-h-screen overflow-x-hidden ${isAdminRoute ? "bg-bg" : "public-site bg-[linear-gradient(180deg,rgba(255,255,255,0.62),transparent_24%),linear-gradient(180deg,rgba(247,248,249,1),rgba(247,248,249,1))] dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.035),transparent_20%),linear-gradient(180deg,rgba(12,13,15,1),rgba(12,13,15,1))]"}`}>
+      {!isAdminRoute ? <PublicSiteMetadata /> : null}
       <a
         href="#content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-card focus:px-4 focus:py-2"

@@ -6,7 +6,6 @@ import PortfolioModal from "../components/PortfolioModal";
 import SectionHeading from "../components/SectionHeading";
 import { getPortfolioImageSource, type PortfolioDisplayItem } from "../data/portfolio";
 import { useCriticalImages } from "../hooks/useCriticalImages";
-import { useGlobalLoadingState } from "../hooks/useGlobalLoadingState";
 import { usePublishedPortfolioItems } from "../hooks/usePublishedPortfolioItems";
 import { useLanguage } from "../hooks/useLanguage";
 
@@ -14,7 +13,7 @@ const priorityPortfolioImageCount = 8;
 
 function PortfolioGallerySkeleton() {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
       {Array.from({ length: priorityPortfolioImageCount }).map((_, index) => (
         <div
           key={index}
@@ -30,7 +29,6 @@ function PortfolioPage() {
   const { galleryItems, isLoading, error } = usePublishedPortfolioItems();
   const { copy } = useLanguage();
   const pageCopy = copy.portfolio.page;
-  useGlobalLoadingState(isLoading);
   const criticalImageSources = useMemo(
     () => galleryItems.slice(0, priorityPortfolioImageCount).map(getPortfolioImageSource),
     [galleryItems],
@@ -62,7 +60,7 @@ function PortfolioPage() {
         </div>
       </div>
 
-      <div className="mx-auto mt-10 max-w-[94rem] rounded-[2rem] border border-line bg-card px-3 py-4 shadow-soft sm:px-4 sm:py-5 lg:px-6 lg:py-6">
+      <div className="mx-auto mt-9 max-w-[88rem] rounded-[1.45rem] border border-line bg-card px-3 py-4 shadow-soft sm:px-4 sm:py-5 lg:px-5 lg:py-5">
         {error ? (
           <p className="mb-4 rounded-[1rem] border border-line bg-surface px-4 py-3 text-[0.9rem] leading-6 text-muted">
             {pageCopy.fallbackNotice}

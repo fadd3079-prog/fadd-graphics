@@ -161,7 +161,7 @@ function PortfolioDetailBentoGallery({
   return (
     <div
       ref={containerRef}
-      className="relative mx-auto w-full max-w-[94rem]"
+      className="relative mx-auto w-full max-w-[88rem]"
       style={{ height: containerWidth > 0 ? galleryHeight : undefined }}
     >
       {images.map((image, index) => {
@@ -189,6 +189,8 @@ function PortfolioDetailBentoGallery({
                 alt={image.alt}
                 className="block h-auto w-full"
                 loading={index < 3 ? "eager" : "lazy"}
+                decoding="async"
+                sizes={image.featured ? "(min-width: 1024px) 58vw, 100vw" : "(min-width: 1024px) 30vw, (min-width: 640px) 48vw, 100vw"}
                 onLoad={handleImageLoad(image)}
               />
             </div>
@@ -262,7 +264,7 @@ function PortfolioDetailPage() {
         </LoadingLink>
       </div>
 
-      <div className="mx-auto mt-10 grid max-w-[94rem] gap-5">
+      <div className="mx-auto mt-9 grid max-w-[88rem] gap-5">
         {isDetailReady ? (
           <PortfolioDetailBentoGallery
             mainSource={mainSource}

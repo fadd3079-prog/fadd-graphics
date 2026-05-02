@@ -13,7 +13,7 @@ function AboutPage() {
 
   return (
     <section className="section-shell pb-16 pt-28 sm:pb-20 sm:pt-32 lg:pt-36">
-      <div className="grid gap-8 xl:grid-cols-[0.9fr_1.1fr] xl:items-end">
+      <div className="grid gap-8 xl:grid-cols-[0.88fr_1.12fr] xl:items-end">
         <div>
           <SectionHeading
             eyebrow={about.detailEyebrow}
@@ -26,14 +26,16 @@ function AboutPage() {
           </LoadingLink>
         </div>
 
-        <div className="section-frame grid gap-5 rounded-[2rem] p-5 sm:grid-cols-[0.86fr_1.14fr] sm:p-6">
+        <div className="section-frame grid gap-5 rounded-[1.45rem] p-5 sm:grid-cols-[0.82fr_1.18fr] sm:p-6">
           <div className="overflow-hidden rounded-[1.45rem] border border-line/80 bg-surface">
             {siteAssets.founderPhoto?.url ? (
               <img
                 src={siteAssets.founderPhoto.url}
                 alt={siteAssets.founderPhoto.alt_text || about.portraitAlt}
                 className="aspect-[4/5] w-full object-cover"
+                loading="eager"
                 decoding="async"
+                sizes="(min-width: 1280px) 320px, (min-width: 640px) 40vw, 100vw"
               />
             ) : (
               <div className="flex aspect-[4/5] w-full items-center justify-center bg-card px-8 text-center">
@@ -43,7 +45,7 @@ function AboutPage() {
           </div>
           <div className="flex flex-col justify-center">
             <p className="editorial-note">FADD GRAPHICS</p>
-            <h1 className="mt-3 text-[2.05rem] font-extrabold leading-[0.98] tracking-[-0.05em] text-text sm:text-[2.6rem]">
+            <h1 className="mt-3 text-[2.05rem] font-extrabold leading-[1.04] tracking-normal text-text sm:text-[2.48rem]">
               Mufaddhol
             </h1>
             <p className="mt-3 text-[1rem] leading-7 text-muted">{about.description}</p>
@@ -58,17 +60,17 @@ function AboutPage() {
         </div>
       </div>
 
-      <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-9 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {about.highlights.map((highlight) => (
-          <article key={highlight} className="section-frame rounded-[1.45rem] p-5">
+          <article key={highlight} className="section-frame rounded-[1.35rem] p-5">
             <BadgeCheck className="h-5 w-5 text-accentStrong" />
             <p className="mt-4 text-[0.94rem] leading-7 text-text">{highlight}</p>
           </article>
         ))}
       </div>
 
-      <div className="mt-12 grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="section-frame rounded-[1.8rem] p-5 sm:p-7">
+      <div className="mt-11 grid gap-7 xl:grid-cols-[1.18fr_0.82fr]">
+        <div className="section-frame rounded-[1.45rem] p-5 sm:p-6">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-[1rem] border border-line/80 bg-surface text-accentStrong">
               <BriefcaseBusiness className="h-5 w-5" />
@@ -102,7 +104,7 @@ function AboutPage() {
         </div>
 
         <div className="grid gap-5">
-          <div className="section-frame rounded-[1.8rem] p-5 sm:p-6">
+          <div className="section-frame rounded-[1.45rem] p-5 sm:p-6">
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-[1rem] border border-line/80 bg-surface text-accentStrong">
                 <BookOpen className="h-5 w-5" />
@@ -119,7 +121,7 @@ function AboutPage() {
             </div>
           </div>
 
-          <div className="section-frame rounded-[1.8rem] p-5 sm:p-6">
+          <div className="section-frame rounded-[1.45rem] p-5 sm:p-6">
             <p className="editorial-note">{about.skillsEyebrow}</p>
             <p className="mt-3 text-[0.92rem] leading-7 text-muted">{about.skillNote}</p>
             <div className="mt-5 flex flex-wrap gap-2">
@@ -136,7 +138,7 @@ function AboutPage() {
         </div>
       </div>
 
-      <div className="mt-12 grid gap-8 xl:grid-cols-[0.78fr_1.22fr]">
+      <div className="mt-11 grid gap-7 xl:grid-cols-[0.78fr_1.22fr]">
         <SectionHeading
           eyebrow={copy.trust.eyebrow}
           title={copy.trust.title}
@@ -147,7 +149,7 @@ function AboutPage() {
             const Icon = trustIcons[index];
 
             return (
-              <article key={signal.title} className="section-frame rounded-[1.45rem] p-5">
+              <article key={signal.title} className="section-frame rounded-[1.35rem] p-5">
                 <span className="flex h-11 w-11 items-center justify-center rounded-[0.95rem] border border-line/80 bg-surface text-accentStrong">
                   <Icon className="h-5 w-5" />
                 </span>

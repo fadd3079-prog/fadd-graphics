@@ -23,18 +23,18 @@ function HeroSection() {
   });
 
   return (
-    <section id="hero" className="section-shell pt-28 sm:pt-32 lg:pt-36">
-      <div className="grid items-start gap-10 xl:grid-cols-[0.98fr_0.92fr] xl:gap-12">
-        <div className="max-w-[44rem] motion-safe:animate-rise motion-safe:duration-700">
+    <section id="hero" className="section-shell pt-28 sm:pt-32 lg:pt-[8.5rem]">
+      <div className="grid items-start gap-9 xl:grid-cols-[1fr_0.84fr] xl:gap-11">
+        <div className="max-w-[43rem] motion-safe:animate-rise motion-safe:duration-700">
           <span className="eyebrow">{hero.eyebrow}</span>
           <h1 className="type-display mt-6 max-w-[12ch] text-balance text-text">
             {hero.title}
           </h1>
-          <p className="mt-5 max-w-[38rem] text-[1rem] leading-[1.72] text-muted sm:text-[1.04rem]">
+          <p className="mt-5 max-w-[38rem] text-[1rem] leading-[1.68] text-muted sm:text-[1.04rem]">
             {hero.description}
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap gap-2.5 sm:gap-3">
             <LoadingLink href="#portfolio" className="button-primary">
               {hero.primaryCta}
               <ArrowUpRight className="h-4 w-4" />
@@ -49,7 +49,7 @@ function HeroSection() {
             </LoadingLink>
           </div>
 
-          <div className="mt-10 grid gap-4 border-y border-line/80 py-5 sm:grid-cols-3">
+          <div className="mt-9 grid gap-4 border-y border-line/80 py-5 sm:grid-cols-3">
             {hero.stats.map((stat, index) => (
               <div key={stat.label} className={index === 0 ? "" : "sm:border-l sm:border-line/80 sm:pl-5"}>
                 <p className="text-[1.85rem] font-extrabold tracking-[-0.05em] text-text">{stat.value}</p>
@@ -68,8 +68,8 @@ function HeroSection() {
           </div>
         </div>
 
-        <div className="max-w-[34rem] motion-safe:animate-rise motion-safe:duration-700 xl:ml-auto">
-          <div className="section-frame overflow-hidden rounded-[1.85rem] p-4 shadow-edge">
+        <div className="max-w-[32.5rem] motion-safe:animate-rise motion-safe:duration-700 xl:ml-auto">
+          <div className="section-frame overflow-hidden p-3.5 shadow-edge sm:p-4">
             <div className="grid gap-4">
               {primaryItem ? (
                 <article className="overflow-hidden rounded-[1.45rem] border border-line/80 bg-surface">
@@ -102,9 +102,10 @@ function HeroSection() {
                       <img
                         src={getPortfolioImageSource(primaryItem)}
                         alt={primaryItem.title}
-                        className="h-full w-full object-cover"
-                        decoding="async"
-                      />
+	                        className="h-full w-full object-cover"
+	                        decoding="async"
+	                        sizes="(min-width: 1280px) 520px, (min-width: 640px) 70vw, 100vw"
+	                      />
                     ) : (
                       <div className="h-full w-full animate-pulse bg-surface" />
                     )}
@@ -127,9 +128,10 @@ function HeroSection() {
                               <img
                                 src={getPortfolioImageSource(teaserItem)}
                                 alt={teaserItem.title}
-                                className="aspect-[4/5] w-full object-cover"
-                                decoding="async"
-                              />
+	                                className="aspect-[4/5] w-full object-cover"
+	                                decoding="async"
+	                                sizes="(min-width: 640px) 78px, 40vw"
+	                              />
                             ) : (
                               <div className="aspect-[4/5] w-full animate-pulse bg-surface" />
                             )}

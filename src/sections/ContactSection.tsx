@@ -19,7 +19,7 @@ function ContactSection() {
 
   return (
     <section id="contact" className="section-shell section-space pb-16 sm:pb-20">
-      <div className="grid gap-10 xl:grid-cols-[0.84fr_1.16fr]">
+      <div className="grid gap-8 xl:grid-cols-[0.82fr_1.18fr] xl:gap-10">
         <div className="space-y-8">
           <SectionHeading
             eyebrow={copy.contact.eyebrow}
@@ -37,7 +37,7 @@ function ContactSection() {
                   href={contact.href}
                   target={contact.href.startsWith("http") ? "_blank" : undefined}
                   rel={contact.href.startsWith("http") ? "noreferrer" : undefined}
-                  className="section-frame rounded-[1.45rem] p-5 hover:border-lineStrong/80"
+                  className="section-frame rounded-[1.35rem] p-5 hover:border-lineStrong/80"
                 >
                   <div className="flex items-center gap-3">
                     <span className="icon-frame">
@@ -48,7 +48,7 @@ function ContactSection() {
                     </p>
                   </div>
                   <div className="mt-4 flex items-center justify-between gap-4">
-                    <p className="text-[1rem] font-semibold tracking-[-0.02em] text-text">{contact.value}</p>
+                    <p className="min-w-0 break-words text-[0.98rem] font-semibold tracking-normal text-text">{contact.value}</p>
                     <ArrowUpRight className="h-4 w-4 shrink-0 text-muted" />
                   </div>
                 </a>

@@ -177,25 +177,6 @@
     @apply text-[0.76rem] font-semibold uppercase tracking-[0.055em] text-muted;
   }
 
-  .admin-kicker {
-    @apply text-[0.72rem] font-semibold uppercase tracking-[0.045em] text-muted;
-  }
-
-  .admin-panel {
-    @apply border border-line bg-card shadow-soft;
-  }
-
-  .admin-auth-shell {
-    @apply relative flex min-h-screen items-center justify-center bg-bg px-5 py-20;
-    background-image:
-      radial-gradient(circle at 16% 10%, rgb(var(--color-accent-soft) / 0.55), transparent 34%),
-      radial-gradient(circle at 84% 8%, rgb(var(--color-accent-cool-soft) / 0.6), transparent 32%);
-  }
-
-  .admin-auth-card {
-    @apply w-full max-w-[29rem] rounded-[1.75rem] border border-line bg-card p-6 shadow-lift sm:p-8;
-  }
-
   @media (min-width: 640px) {
     .portfolio-masonry {
       column-count: 2;
@@ -266,11 +247,70 @@
   }
 
   .type-section {
-    @apply text-[2.02rem] font-bold leading-[0.98] tracking-[-0.045em] sm:text-[2.62rem] lg:text-[3.22rem];
+    @apply text-[2.02rem] font-bold leading-[0.98] tracking-[-0.06em] sm:text-[2.62rem] lg:text-[3.22rem];
   }
 
   .type-subtitle {
     @apply text-[0.98rem] leading-[1.72] text-muted sm:text-[1.03rem];
+  }
+
+  .public-site h1,
+  .public-site h2,
+  .public-site h3 {
+    letter-spacing: 0;
+  }
+
+  .public-site .section-shell {
+    @apply max-w-[1220px] px-4 sm:px-6 lg:px-8;
+  }
+
+  .public-site .portfolio-shell {
+    @apply max-w-[1380px];
+  }
+
+  .public-site .section-space {
+    @apply mt-14 sm:mt-16 lg:mt-20;
+  }
+
+  .public-site .section-frame {
+    @apply rounded-[1.45rem];
+  }
+
+  .public-site .button-primary,
+  .public-site .button-secondary {
+    @apply min-h-11 justify-center px-4 py-2.5 text-center leading-5 tracking-[0.035em];
+  }
+
+  .public-site .type-display {
+    @apply text-[2.55rem] leading-[1.02] tracking-[-0.07em] sm:text-[3.45rem] lg:text-[4.35rem] xl:text-[4.85rem];
+  }
+
+  .public-site .type-section {
+    @apply text-[1.9rem] leading-[1.08] tracking-[-0.07em] sm:text-[2.35rem] lg:text-[2.85rem];
+  }
+
+  .public-site .type-subtitle {
+    @apply text-[0.98rem] leading-[1.68] sm:text-[1.02rem];
+  }
+
+  .public-site .portfolio-masonry {
+    column-gap: 0.85rem;
+  }
+
+  .public-site .portfolio-masonry-item {
+    margin-bottom: 0.85rem;
+  }
+
+  @media (min-width: 1280px) {
+    .public-site .portfolio-masonry {
+      column-count: 3;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .public-site .portfolio-masonry {
+      column-count: 4;
+    }
   }
 }
 

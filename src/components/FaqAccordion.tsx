@@ -21,15 +21,15 @@ function FaqAccordion({ items }: FaqAccordionProps) {
         return (
           <article
             key={item.question}
-            className="section-frame overflow-hidden rounded-[1.5rem]"
+            className="section-frame overflow-hidden rounded-[1.35rem]"
           >
             <button
               type="button"
-              className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left sm:px-6"
+              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6"
               aria-expanded={isOpen}
               onClick={() => setOpenIndex(isOpen ? -1 : index)}
             >
-              <span className="text-[1rem] font-bold tracking-[-0.03em] text-text sm:text-[1.08rem]">
+              <span className="text-[1rem] font-bold tracking-normal text-text sm:text-[1.06rem]">
                 {item.question}
               </span>
               <ChevronDown

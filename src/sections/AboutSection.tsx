@@ -13,7 +13,7 @@ function AboutSection() {
 
   return (
     <section id="about" className="section-shell section-space">
-      <div className="section-frame overflow-hidden rounded-[2rem]">
+      <div className="section-frame overflow-hidden rounded-[1.45rem]">
         <div className="grid gap-0 xl:grid-cols-[0.82fr_1.18fr]">
           <div className="p-4 sm:p-5">
             <div className="relative overflow-hidden rounded-[1.55rem] border border-line/80 bg-surface">
@@ -21,10 +21,11 @@ function AboutSection() {
                 <img
                   src={siteAssets.founderPhoto.url}
                   alt={siteAssets.founderPhoto.alt_text || about.portraitAlt}
-                  className="aspect-[4/5] w-full object-cover xl:aspect-square"
-                  loading="lazy"
-                  decoding="async"
-                />
+	                  className="aspect-[4/5] w-full object-cover xl:aspect-square"
+	                  loading="lazy"
+	                  decoding="async"
+	                  sizes="(min-width: 1280px) 390px, (min-width: 640px) 45vw, 100vw"
+	                />
               ) : (
                 <div className="flex aspect-[4/5] w-full items-center justify-center bg-card px-8 text-center xl:aspect-square">
                   <p className="text-[0.95rem] leading-7 text-muted">Foto profil dapat ditambahkan dari dashboard admin.</p>
@@ -34,7 +35,7 @@ function AboutSection() {
                 <p className="text-[0.75rem] font-semibold uppercase tracking-[0.055em] text-white/68">
                   FADD GRAPHICS
                 </p>
-                <p className="mt-1 text-[0.98rem] font-semibold tracking-[-0.025em]">
+                <p className="mt-1 text-[0.98rem] font-semibold tracking-normal">
                   Mufaddhol
                 </p>
               </div>

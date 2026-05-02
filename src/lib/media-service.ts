@@ -44,6 +44,7 @@ type UploadMediaOptions = {
 };
 
 const mediaBucket = "site-media";
+const defaultAdminMediaLimit = 48;
 
 function requireSupabase() {
   if (!supabase) {
@@ -132,18 +133,39 @@ export async function uploadMediaAssets(files: FileList | File[], options: Uploa
   );
 }
 
-export async function fetchAdminMediaAssets() {
+type FetchAdminMediaAssetsOptions = {
+  limit?: number;
+  offset?: number;
+};
+
+export async function fetchAdminMediaAssets(options: FetchAdminMediaAssetsOptions = {}) {
   const client = requireSupabase();
+  const limit = options.limit ?? defaultAdminMediaLimit;
+  const offset = options.offset ?? 0;
   const { data, error } = await client
     .from("media_assets")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) {
     throw error;
   }
 
   return data as MediaAssetRow[];
+}
+
+export async function fetchAdminMediaAssetCount() {
+  const client = requireSupabase();
+  const { count, error } = await client
+    .from("media_assets")
+    .select("id", { count: "exact", head: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return count ?? 0;
 }
 
 export async function fetchAdminSiteAssets() {

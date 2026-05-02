@@ -137,7 +137,7 @@ function ContactForm() {
 
   return (
     <form
-      className="section-frame rounded-[1.85rem] p-5 sm:p-7"
+      className="section-frame rounded-[1.45rem] p-5 sm:p-6"
       onSubmit={handleSubmit}
       noValidate
     >
@@ -209,12 +209,12 @@ function ContactForm() {
         ) : null}
       </label>
 
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div aria-live="polite" className="max-w-xl text-[0.92rem] leading-6 text-muted">
           {status.message}
         </div>
 
-        <div className="flex flex-wrap gap-3 sm:shrink-0">
+        <div className="flex flex-wrap gap-3 lg:shrink-0">
           {status.type === "success" ? (
             <>
               <a

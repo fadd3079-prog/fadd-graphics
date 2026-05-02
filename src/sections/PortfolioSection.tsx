@@ -46,7 +46,7 @@ function PortfolioSection() {
           align="center"
         />
 
-        <div className="grid gap-4 lg:grid-cols-[1.06fr_0.94fr]">
+        <div className="grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
           {primaryFeaturedItem ? (
             <article className="section-frame overflow-hidden rounded-[1.65rem]">
               <div className="aspect-[16/10] overflow-hidden border-b border-line/80">
@@ -56,9 +56,10 @@ function PortfolioSection() {
                   className="h-full w-full object-cover transition duration-500 ease-premium hover:scale-[1.02]"
                   loading="lazy"
                   decoding="async"
+                  sizes="(min-width: 1024px) 620px, 100vw"
                 />
               </div>
-              <div className="space-y-2.5 p-4 sm:p-5">
+              <div className="space-y-2.5 p-4 sm:p-5 lg:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <span className="editorial-note">{primaryFeaturedItem.deliverable ?? portfolioCopy.fallbackDeliverable}</span>
                   {primaryFeaturedItem.tone ? (
@@ -79,21 +80,22 @@ function PortfolioSection() {
             </article>
           ) : null}
 
-          <div className="grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             {secondaryFeaturedItems.map((item) => (
-              <article key={item.id} className="section-frame overflow-hidden rounded-[1.65rem]">
-                <div className="aspect-[4/5] overflow-hidden border-b border-line/80">
+              <article key={item.id} className="section-frame grid overflow-hidden rounded-[1.45rem] sm:grid-cols-[0.78fr_1fr] lg:grid-cols-[0.72fr_1fr]">
+                <div className="aspect-[4/3] overflow-hidden border-b border-line/80 sm:border-b-0 sm:border-r">
                   <img
                     src={getPortfolioImageSource(item)}
                     alt={item.title}
                     className="h-full w-full object-cover transition duration-500 ease-premium hover:scale-[1.02]"
                     loading="lazy"
                     decoding="async"
+                    sizes="(min-width: 1024px) 260px, (min-width: 640px) 42vw, 100vw"
                   />
                 </div>
-                <div className="space-y-2.5 p-4">
+                <div className="flex min-w-0 flex-col justify-center space-y-2.5 p-4">
                   <span className="editorial-note">{item.deliverable ?? portfolioCopy.fallbackDeliverable}</span>
-                  <h3 className="max-w-[18ch] text-[1.1rem] font-bold tracking-[-0.045em] text-text">
+                  <h3 className="max-w-[20ch] text-[1.06rem] font-bold tracking-[-0.02em] text-text">
                     {item.title}
                   </h3>
                   {item.focus ? <p className="text-[0.88rem] leading-6 text-muted">{item.focus}</p> : null}
@@ -118,7 +120,7 @@ function PortfolioSection() {
             align="center"
           />
 
-          <div className="section-frame flex w-full max-w-[68rem] flex-col gap-4 rounded-[1.7rem] p-5 sm:p-6">
+          <div className="section-frame flex w-full max-w-[66rem] flex-col gap-4 rounded-[1.45rem] p-4 sm:p-5">
             <div className="flex flex-wrap justify-center gap-2">
               {portfolioCategories.map((category) => {
                 const isActive = activeCategory === category.id;
@@ -132,7 +134,7 @@ function PortfolioSection() {
                         setActiveCategory(category.id as PortfolioCategory | "all"),
                       )
                     }
-                    className={`rounded-full px-4 py-2 text-[0.74rem] font-semibold uppercase tracking-[0.045em] ${
+                    className={`min-h-10 rounded-full px-3.5 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.04em] ${
                       isActive
                         ? "bg-text text-bg"
                         : "border border-lineStrong/60 bg-surface text-text hover:border-accent/35 hover:text-accent"
@@ -172,7 +174,7 @@ function PortfolioSection() {
           )}
         </div>
 
-        <div className="section-frame rounded-[1.75rem] p-5 sm:p-6">
+        <div className="section-frame rounded-[1.45rem] p-5 sm:p-6">
           <div className="flex flex-col gap-5 border-b border-line/80 pb-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <p className="editorial-note">{portfolioCopy.archiveEyebrow}</p>
@@ -198,6 +200,7 @@ function PortfolioSection() {
                   className="aspect-[4/5] w-full object-cover"
                   loading="lazy"
                   decoding="async"
+                  sizes="(min-width: 1024px) 12vw, (min-width: 640px) 25vw, 33vw"
                 />
               </div>
             ))}

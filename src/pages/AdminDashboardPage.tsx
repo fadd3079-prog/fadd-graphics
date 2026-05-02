@@ -1,18 +1,25 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import {
-  ChevronDown,
+  ArrowDown,
+  ArrowUp,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
+  ChevronsLeft,
+  ChevronsRight,
+  Circle,
+  FileImage,
   Image,
   LayoutDashboard,
   Link as LinkIcon,
+  Loader2,
   LogOut,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
   Save,
+  Search,
   Settings,
   SquarePen,
   Trash2,
@@ -20,10 +27,9 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+import ThemeToggle from "../components/ThemeToggle";
 import { useAdminAuth } from "../hooks/useAdminAuth";
 import { useTheme } from "../hooks/useTheme";
-import { useUiLoading } from "../components/UiLoadingProvider";
-import ThemeToggle from "../components/ThemeToggle";
 import {
   createDefaultPortfolioFormState,
   createPortfolioItem,
@@ -38,6 +44,7 @@ import {
 } from "../lib/portfolio-service";
 import {
   deleteMediaAsset,
+  fetchAdminMediaAssetCount,
   fetchAdminMediaAssets,
   fetchAdminSiteAssets,
   fetchAdminSiteSettings,
@@ -52,6 +59,8 @@ import type { MediaAssetRow, PortfolioRow, SiteAssetRow, SiteSettingRow } from "
 
 const categoryOptions = ["logo", "identity", "campaign", "editorial", "event", "promotion", "announcement"];
 const layoutOptions = ["wide", "tall", "panoramic"] as const;
+const mediaPageSize = 48;
+
 const tabs = [
   { id: "ringkasan", label: "Ringkasan", icon: LayoutDashboard },
   { id: "portofolio", label: "Portofolio", icon: Image },
@@ -63,12 +72,31 @@ const tabs = [
 ] as const;
 
 type AdminTab = (typeof tabs)[number]["id"];
+type StatusTone = "normal" | "success" | "danger";
+type BusyKey =
+  | "base"
+  | "portfolio-save"
+  | "portfolio-delete"
+  | "portfolio-order"
+  | "main-upload"
+  | "gallery-upload"
+  | "gallery-delete"
+  | "media-load"
+  | "media-upload"
+  | "media-delete"
+  | "asset-upload"
+  | "profile-save"
+  | "contact-save"
+  | "logout";
+
+type PortfolioStatusFilter = "semua" | "beranda" | "unggulan" | "terbit" | "draf";
 
 const defaultContactLinks: ContactLinkSetting[] = [
   { label: "WhatsApp", value: "+62 831 5096 4050", href: "https://wa.me/6283150964050", type: "whatsapp", isActive: true, sortOrder: 1 },
   { label: "Email", value: "faddgraphics@gmail.com", href: "mailto:faddgraphics@gmail.com", type: "email", isActive: true, sortOrder: 2 },
   { label: "Instagram", value: "@fadd_graphics", href: "https://instagram.com/fadd_graphics", type: "instagram", isActive: true, sortOrder: 3 },
   { label: "LinkedIn", value: "Mufaddhol", href: "https://www.linkedin.com/in/mufaddhol-01b60333a/", type: "linkedin", isActive: true, sortOrder: 4 },
+  { label: "Lainnya", value: "", href: "", type: "other", isActive: false, sortOrder: 5 },
 ];
 
 const defaultAboutProfile: AboutProfileSetting = {
@@ -78,13 +106,13 @@ const defaultAboutProfile: AboutProfileSetting = {
   detailBio: "",
 };
 
-const siteAssetSlots: { key: SiteAssetKey; label: string; description: string; section: string }[] = [
-  { key: "header_logo_light", label: "Logo header terang", description: "Dipakai di header mode terang.", section: "identity" },
-  { key: "header_logo_dark", label: "Logo header gelap", description: "Dipakai di header mode gelap.", section: "identity" },
-  { key: "footer_logo_light", label: "Logo footer terang", description: "Dipakai di footer mode terang.", section: "identity" },
-  { key: "footer_logo_dark", label: "Logo footer gelap", description: "Dipakai di footer mode gelap.", section: "identity" },
-  { key: "favicon", label: "Favicon", description: "Ikon kecil pada tab browser.", section: "identity" },
-  { key: "og_image", label: "OG / social preview", description: "Gambar preview saat link dibagikan.", section: "identity" },
+const siteAssetSlots: { key: SiteAssetKey; label: string; description: string; section: string; accept: string }[] = [
+  { key: "header_logo_light", label: "Logo header terang", description: "Dipakai di header mode terang.", section: "identity", accept: "image/jpeg,image/png,image/webp,image/svg+xml" },
+  { key: "header_logo_dark", label: "Logo header gelap", description: "Dipakai di header mode gelap.", section: "identity", accept: "image/jpeg,image/png,image/webp,image/svg+xml" },
+  { key: "footer_logo_light", label: "Logo footer terang", description: "Dipakai di footer mode terang.", section: "identity", accept: "image/jpeg,image/png,image/webp,image/svg+xml" },
+  { key: "footer_logo_dark", label: "Logo footer gelap", description: "Dipakai di footer mode gelap.", section: "identity", accept: "image/jpeg,image/png,image/webp,image/svg+xml" },
+  { key: "favicon", label: "Favicon", description: "Ikon kecil pada tab browser.", section: "identity", accept: "image/png,image/webp,image/svg+xml" },
+  { key: "og_image", label: "OG / social preview", description: "Gambar preview saat link dibagikan.", section: "identity", accept: "image/jpeg,image/png,image/webp" },
 ];
 
 function getSettingValue<T>(settings: SiteSettingRow[], key: string, fallback: T): T {
@@ -97,61 +125,245 @@ function getAssetByKey(assets: SiteAssetRow[], key: SiteAssetKey) {
   return assets.find((asset) => asset.asset_key === key && asset.is_active);
 }
 
+function formatDate(value: string | null | undefined) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function formatBytes(value: number | null) {
+  if (!value) {
+    return "-";
+  }
+
+  if (value < 1024 * 1024) {
+    return `${Math.round(value / 1024)} KB`;
+  }
+
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function normalizeSearch(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function AdminShellButton({
+  children,
+  className,
+  disabled,
+  variant = "secondary",
+  ...props
+}: {
+  children: ReactNode;
+  className?: string;
+  disabled?: boolean;
+  variant?: "primary" | "secondary" | "danger" | "ghost";
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const variants = {
+    primary: "border-text bg-text text-bg hover:bg-accent hover:text-white",
+    secondary: "border-line bg-card text-text hover:border-accent/70 hover:text-accent",
+    danger: "border-line bg-card text-text hover:border-red-500/60 hover:text-red-600 dark:hover:text-red-300",
+    ghost: "border-transparent bg-transparent text-muted hover:bg-surface hover:text-text",
+  };
+
+  return (
+    <button
+      {...props}
+      disabled={disabled}
+      className={cx(
+        "inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border px-3.5 py-2 text-[0.82rem] font-semibold transition disabled:pointer-events-none disabled:opacity-55",
+        variants[variant],
+        className,
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function FieldLabel({ children }: { children: ReactNode }) {
+  return <span className="text-[0.72rem] font-bold uppercase tracking-[0.06em] text-muted">{children}</span>;
+}
+
+function StatusBadge({ children, tone = "normal" }: { children: ReactNode; tone?: StatusTone }) {
+  const toneClass = {
+    normal: "border-line bg-surface text-muted",
+    success: "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+    danger: "border-red-500/25 bg-red-500/10 text-red-700 dark:text-red-300",
+  };
+
+  return (
+    <span className={cx("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.055em]", toneClass[tone])}>
+      {children}
+    </span>
+  );
+}
+
+function SectionCard({ children, className }: { children: ReactNode; className?: string }) {
+  return <section className={cx("rounded-2xl border border-line bg-card shadow-soft", className)}>{children}</section>;
+}
+
+function EmptyState({ children }: { children: ReactNode }) {
+  return <div className="rounded-xl border border-dashed border-lineStrong bg-surface/70 px-4 py-8 text-center text-[0.9rem] leading-6 text-muted">{children}</div>;
+}
+
 function AdminDashboardPage() {
   const { user, signOut } = useAdminAuth();
   const { theme, toggleTheme } = useTheme();
-  const { beginLoading } = useUiLoading();
   const [activeTab, setActiveTab] = useState<AdminTab>("ringkasan");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [items, setItems] = useState<PortfolioRow[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAssetRow[]>([]);
+  const [mediaTotal, setMediaTotal] = useState(0);
   const [siteAssets, setSiteAssets] = useState<SiteAssetRow[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [formValues, setFormValues] = useState<PortfolioFormState>(() => createDefaultPortfolioFormState());
   const [formResetKey, setFormResetKey] = useState(0);
   const [contactLinks, setContactLinks] = useState<ContactLinkSetting[]>(defaultContactLinks);
   const [aboutProfile, setAboutProfile] = useState<AboutProfileSetting>(defaultAboutProfile);
+  const [portfolioSearch, setPortfolioSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("semua");
+  const [statusFilter, setStatusFilter] = useState<PortfolioStatusFilter>("semua");
+  const [mediaPage, setMediaPage] = useState(0);
+  const [status, setStatus] = useState<{ tone: StatusTone; text: string } | null>(null);
+  const [busyKeys, setBusyKeys] = useState<Set<BusyKey>>(() => new Set(["base"]));
   const formSessionRef = useRef(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [status, setStatus] = useState("");
+  const isContactDirtyRef = useRef(false);
+  const isAboutDirtyRef = useRef(false);
+  const isInitialLoading = busyKeys.has("base");
+  const isSaving = busyKeys.size > 0 && !busyKeys.has("base");
+
+  const runBusy = useCallback(async <T,>(key: BusyKey, task: () => Promise<T>) => {
+    setBusyKeys((current) => new Set(current).add(key));
+
+    try {
+      return await task();
+    } finally {
+      setBusyKeys((current) => {
+        const next = new Set(current);
+        next.delete(key);
+        return next;
+      });
+    }
+  }, []);
+
+  const showStatus = useCallback((tone: StatusTone, text: string) => {
+    setStatus({ tone, text });
+  }, []);
+
+  const loadMediaPage = useCallback(
+    async (page = mediaPage) => {
+      await runBusy("media-load", async () => {
+        const offset = page * mediaPageSize;
+        const [mediaRows, totalCount] = await Promise.all([
+          fetchAdminMediaAssets({ limit: mediaPageSize, offset }),
+          fetchAdminMediaAssetCount(),
+        ]);
+
+        setMediaAssets(mediaRows);
+        setMediaTotal(totalCount);
+      });
+    },
+    [mediaPage, runBusy],
+  );
+
+  const loadBaseData = useCallback(async () => {
+    await runBusy("base", async () => {
+      setStatus(null);
+      const [portfolioRows, mediaCount, assetRows, settingRows] = await Promise.all([
+        fetchAdminPortfolioItems(),
+        fetchAdminMediaAssetCount(),
+        fetchAdminSiteAssets(),
+        fetchAdminSiteSettings(),
+      ]);
+      const nextContactLinks = getSettingValue(settingRows, "contact_links", defaultContactLinks);
+      const nextAboutProfile = getSettingValue(settingRows, "about_profile", defaultAboutProfile);
+
+      setItems(portfolioRows);
+      setMediaTotal(mediaCount);
+      setSiteAssets(assetRows);
+
+      if (!isContactDirtyRef.current) {
+        setContactLinks(nextContactLinks);
+      }
+
+      if (!isAboutDirtyRef.current) {
+        setAboutProfile(nextAboutProfile);
+      }
+    });
+  }, [runBusy]);
+
+  useEffect(() => {
+    void loadBaseData().catch((error) => showStatus("danger", error instanceof Error ? error.message : "Dashboard tidak dapat dimuat."));
+  }, [loadBaseData, showStatus]);
+
+  useEffect(() => {
+    if (activeTab !== "media" || mediaAssets.length) {
+      return;
+    }
+
+    void loadMediaPage(0).catch((error) => showStatus("danger", error instanceof Error ? error.message : "Media tidak dapat dimuat."));
+  }, [activeTab, loadMediaPage, mediaAssets.length, showStatus]);
 
   const siteAssetMap = useMemo(
     () => Object.fromEntries(siteAssets.map((asset) => [asset.asset_key, asset])),
     [siteAssets],
   ) as Record<string, SiteAssetRow | undefined>;
-  const activeTabData = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
 
-  const loadDashboard = useCallback(async () => {
-    setIsLoading(true);
-    setStatus("");
-    const endLoading = beginLoading();
+  const selectedItem = useMemo(
+    () => items.find((item) => item.id === selectedItemId) ?? null,
+    [items, selectedItemId],
+  );
 
-    try {
-      const [portfolioRows, mediaRows, assetRows, settingRows] = await Promise.all([
-        fetchAdminPortfolioItems(),
-        fetchAdminMediaAssets(),
-        fetchAdminSiteAssets(),
-        fetchAdminSiteSettings(),
-      ]);
+  const stats = useMemo(() => {
+    const home = items.filter((item) => item.is_home).length;
+    const featured = items.filter((item) => item.is_featured).length;
+    const published = items.filter((item) => item.is_published).length;
 
-      setItems(portfolioRows);
-      setMediaAssets(mediaRows);
-      setSiteAssets(assetRows);
-      setContactLinks(getSettingValue(settingRows, "contact_links", defaultContactLinks));
-      setAboutProfile(getSettingValue(settingRows, "about_profile", defaultAboutProfile));
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Dashboard tidak dapat dimuat.");
-    } finally {
-      setIsLoading(false);
-      endLoading();
-    }
-  }, [beginLoading]);
+    return {
+      total: items.length,
+      media: mediaTotal,
+      home,
+      featured,
+      published,
+      draft: items.length - published,
+      assets: siteAssets.filter((asset) => asset.is_active).length,
+    };
+  }, [items, mediaTotal, siteAssets]);
 
-  useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+  const recentItems = useMemo(
+    () => [...items].sort((first, second) => new Date(second.updated_at).getTime() - new Date(first.updated_at).getTime()).slice(0, 5),
+    [items],
+  );
+
+  const filteredItems = useMemo(() => {
+    const search = normalizeSearch(portfolioSearch);
+
+    return items.filter((item) => {
+      const matchesSearch = !search || [item.title, item.slug, item.category, item.summary ?? ""].some((value) => normalizeSearch(value).includes(search));
+      const matchesCategory = categoryFilter === "semua" || item.category === categoryFilter;
+      const matchesStatus =
+        statusFilter === "semua" ||
+        (statusFilter === "beranda" && item.is_home) ||
+        (statusFilter === "unggulan" && item.is_featured) ||
+        (statusFilter === "terbit" && item.is_published) ||
+        (statusFilter === "draf" && !item.is_published);
+
+      return matchesSearch && matchesCategory && matchesStatus;
+    });
+  }, [categoryFilter, items, portfolioSearch, statusFilter]);
+
+  const mediaPageCount = Math.max(1, Math.ceil(mediaTotal / mediaPageSize));
 
   const updateField =
     (field: keyof PortfolioFormState) =>
@@ -165,21 +377,22 @@ function AdminDashboardPage() {
       }));
     };
 
-  const resetForm = () => {
+  const resetFormState = useCallback(() => {
     formSessionRef.current += 1;
     setSelectedItemId(null);
     setFormValues(createDefaultPortfolioFormState());
     setFormResetKey((currentKey) => currentKey + 1);
-    setStatus("");
-  };
+    setStatus(null);
+  }, []);
 
   const handleEdit = (row: PortfolioRow) => {
     formSessionRef.current += 1;
     setSelectedItemId(row.id);
     setFormValues(rowToFormState(row));
     setFormResetKey((currentKey) => currentKey + 1);
-    setStatus("");
+    setStatus(null);
     setActiveTab("portofolio");
+    setIsSidebarOpen(false);
   };
 
   const handleMainImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -189,9 +402,7 @@ function AdminDashboardPage() {
       return;
     }
 
-    const endLoading = beginLoading();
-
-    try {
+    await runBusy("main-upload", async () => {
       const uploadSession = formSessionRef.current;
       const [image] = await uploadPortfolioImages(files);
 
@@ -206,13 +417,12 @@ function AdminDashboardPage() {
         imagePath: image.path,
         imageMediaId: image.mediaId,
       }));
-      await loadDashboard();
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unggah gambar utama gagal.");
-    } finally {
-      event.target.value = "";
-      endLoading();
-    }
+      const [mediaCount] = await Promise.all([fetchAdminMediaAssetCount()]);
+      setMediaTotal(mediaCount);
+      showStatus("success", "Gambar utama sudah diunggah. Simpan portofolio untuk menerapkan perubahan.");
+    }).catch((error) => showStatus("danger", error instanceof Error ? error.message : "Unggah gambar utama gagal."));
+
+    event.target.value = "";
   };
 
   const handleGalleryUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -222,9 +432,7 @@ function AdminDashboardPage() {
       return;
     }
 
-    const endLoading = beginLoading();
-
-    try {
+    await runBusy("gallery-upload", async () => {
       const uploadSession = formSessionRef.current;
       const images = await uploadPortfolioImages(files);
 
@@ -240,13 +448,12 @@ function AdminDashboardPage() {
         galleryImageIds: [...currentValues.galleryImageIds, ...images.map(() => "")],
         galleryMediaIds: [...currentValues.galleryMediaIds, ...images.map((image) => image.mediaId)],
       }));
-      await loadDashboard();
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unggah galeri gagal.");
-    } finally {
-      event.target.value = "";
-      endLoading();
-    }
+      const [mediaCount] = await Promise.all([fetchAdminMediaAssetCount()]);
+      setMediaTotal(mediaCount);
+      showStatus("success", "Gambar galeri sudah diunggah. Simpan portofolio untuk menerapkan perubahan.");
+    }).catch((error) => showStatus("danger", error instanceof Error ? error.message : "Unggah galeri gagal."));
+
+    event.target.value = "";
   };
 
   const handleRemoveGalleryImage = async (index: number) => {
@@ -258,24 +465,16 @@ function AdminDashboardPage() {
       galleryMediaIds: formValues.galleryMediaIds.filter((_, imageIndex) => imageIndex !== index),
     };
 
-    setIsSaving(true);
-    setStatus("");
-    const endLoading = beginLoading();
-
-    try {
+    await runBusy("gallery-delete", async () => {
       if (selectedItemId) {
         await updatePortfolioItem(selectedItemId, nextValues);
-        await loadDashboard();
+        const portfolioRows = await fetchAdminPortfolioItems();
+        setItems(portfolioRows);
       }
 
       setFormValues(nextValues);
-      setStatus("Gambar galeri dilepas dari portofolio.");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Gambar galeri tidak dapat dilepas.");
-    } finally {
-      setIsSaving(false);
-      endLoading();
-    }
+      showStatus("success", "Gambar galeri dilepas dari portofolio.");
+    }).catch((error) => showStatus("danger", error instanceof Error ? error.message : "Gambar galeri tidak dapat dilepas."));
   };
 
   const moveGalleryImage = (index: number, direction: -1 | 1) => {
@@ -302,48 +501,41 @@ function AdminDashboardPage() {
     }));
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmitPortfolio = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsSaving(true);
-    setStatus("");
-    const endLoading = beginLoading();
 
-    try {
+    await runBusy("portfolio-save", async () => {
       const isEditing = Boolean(selectedItemId);
       const savedItem = selectedItemId
         ? await updatePortfolioItem(selectedItemId, formValues)
         : await createPortfolioItem(formValues);
+      const [portfolioRows, mediaCount] = await Promise.all([fetchAdminPortfolioItems(), fetchAdminMediaAssetCount()]);
 
-      resetForm();
-      await loadDashboard();
-      setStatus(isEditing ? "Portofolio berhasil diperbarui." : `Portofolio "${savedItem.title}" berhasil dibuat.`);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Portofolio tidak dapat disimpan.");
-    } finally {
-      setIsSaving(false);
-      endLoading();
-    }
+      resetFormState();
+      setItems(portfolioRows);
+      setMediaTotal(mediaCount);
+      showStatus("success", isEditing ? "Portofolio berhasil diperbarui." : `Portofolio "${savedItem.title}" berhasil dibuat.`);
+    }).catch((error) => showStatus("danger", error instanceof Error ? error.message : "Portofolio tidak dapat disimpan."));
   };
 
-  const handleDelete = async (row: PortfolioRow) => {
+  const handleDeletePortfolio = async (row: PortfolioRow) => {
     const confirmed = window.confirm(`Hapus "${row.title}" dari portofolio? Media yang sudah diunggah tetap tersimpan di Media Library.`);
 
     if (!confirmed) {
       return;
     }
 
-    setStatus("");
-    const endLoading = beginLoading();
-
-    try {
+    await runBusy("portfolio-delete", async () => {
       await deletePortfolioItem(row);
-      await loadDashboard();
-      setStatus("Portofolio berhasil dihapus.");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Portofolio tidak dapat dihapus.");
-    } finally {
-      endLoading();
-    }
+
+      if (selectedItemId === row.id) {
+        resetFormState();
+      }
+
+      const portfolioRows = await fetchAdminPortfolioItems();
+      setItems(portfolioRows);
+      showStatus("success", "Portofolio berhasil dihapus.");
+    }).catch((error) => showStatus("danger", error instanceof Error ? error.message : "Portofolio tidak dapat dihapus."));
   };
 
   const handleMoveItem = async (index: number, direction: -1 | 1) => {
@@ -363,18 +555,15 @@ function AdminDashboardPage() {
     }));
 
     setItems(orderedItems);
-    setStatus("");
-    const endLoading = beginLoading();
 
-    try {
+    await runBusy("portfolio-order", async () => {
       await updatePortfolioOrder(orderedItems);
-      setStatus("Urutan portofolio berhasil diperbarui.");
-    } catch (error) {
-      await loadDashboard();
-      setStatus(error instanceof Error ? error.message : "Urutan portofolio tidak dapat diperbarui.");
-    } finally {
-      endLoading();
-    }
+      showStatus("success", "Urutan portofolio berhasil diperbarui.");
+    }).catch(async (error) => {
+      const portfolioRows = await fetchAdminPortfolioItems();
+      setItems(portfolioRows);
+      showStatus("danger", error instanceof Error ? error.message : "Urutan portofolio tidak dapat diperbarui.");
+    });
   };
 
   const handleMediaUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -384,43 +573,33 @@ function AdminDashboardPage() {
       return;
     }
 
-    const endLoading = beginLoading();
-
-    try {
+    await runBusy("media-upload", async () => {
       await uploadMediaAssets(files, {
         section: "library",
         usageType: "general",
         label: "Media library",
         altText: "Media library",
       });
-      await loadDashboard();
-      setStatus("Media berhasil diupload.");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Media tidak dapat diupload.");
-    } finally {
-      event.target.value = "";
-      endLoading();
-    }
+      setMediaPage(0);
+      await loadMediaPage(0);
+      showStatus("success", "Media berhasil diunggah.");
+    }).catch((error) => showStatus("danger", error instanceof Error ? error.message : "Media tidak dapat diunggah."));
+
+    event.target.value = "";
   };
 
   const handleDeleteMedia = async (row: MediaAssetRow) => {
-    const confirmed = window.confirm(`Hapus media "${row.label}"?`);
+    const confirmed = window.confirm(`Hapus media "${row.label}"? Media yang masih dipakai tidak akan bisa dihapus.`);
 
     if (!confirmed) {
       return;
     }
 
-    const endLoading = beginLoading();
-
-    try {
+    await runBusy("media-delete", async () => {
       await deleteMediaAsset(row);
-      await loadDashboard();
-      setStatus("Media berhasil dihapus.");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Media tidak dapat dihapus.");
-    } finally {
-      endLoading();
-    }
+      await loadMediaPage(mediaPage);
+      showStatus("success", "Media berhasil dihapus.");
+    }).catch((error) => showStatus("danger", error instanceof Error ? error.message : "Media tidak dapat dihapus."));
   };
 
   const handleSiteAssetUpload = (assetKey: SiteAssetKey, label: string, section: string) => async (event: ChangeEvent<HTMLInputElement>) => {
@@ -430,9 +609,7 @@ function AdminDashboardPage() {
       return;
     }
 
-    const endLoading = beginLoading();
-
-    try {
+    await runBusy("asset-upload", async () => {
       const [media] = await uploadMediaAssets(files, {
         section,
         usageType: assetKey,
@@ -446,14 +623,14 @@ function AdminDashboardPage() {
         section,
         usage_type: assetKey,
       });
-      await loadDashboard();
-      setStatus(`${label} berhasil diperbarui.`);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : `${label} tidak dapat diupload.`);
-    } finally {
-      event.target.value = "";
-      endLoading();
-    }
+
+      const [assetRows, mediaCount] = await Promise.all([fetchAdminSiteAssets(), fetchAdminMediaAssetCount()]);
+      setSiteAssets(assetRows);
+      setMediaTotal(mediaCount);
+      showStatus("success", `${label} berhasil diperbarui.`);
+    }).catch((error) => showStatus("danger", error instanceof Error ? error.message : `${label} tidak dapat diunggah.`));
+
+    event.target.value = "";
   };
 
   const handleFounderPhotoUpload = handleSiteAssetUpload("founder_photo", "Foto profil Mufaddhol", "about");
@@ -463,6 +640,7 @@ function AdminDashboardPage() {
     (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       const target = event.target;
       const value = target instanceof HTMLInputElement && target.type === "checkbox" ? target.checked : target.value;
+      isContactDirtyRef.current = true;
 
       setContactLinks((currentLinks) =>
         currentLinks.map((link, linkIndex) =>
@@ -478,10 +656,15 @@ function AdminDashboardPage() {
 
   const saveContactSettings = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsSaving(true);
-    const endLoading = beginLoading();
 
-    try {
+    const invalidLink = contactLinks.find((link) => link.isActive && (!link.label.trim() || !link.value.trim() || !link.href.trim()));
+
+    if (invalidLink) {
+      showStatus("danger", "Link kontak aktif wajib memiliki label, teks tampil, dan URL.");
+      return;
+    }
+
+    await runBusy("contact-save", async () => {
       await upsertSiteSetting(
         "contact_links",
         contactLinks.map((link, index) => ({
@@ -489,45 +672,43 @@ function AdminDashboardPage() {
           sortOrder: index + 1,
         })),
       );
-      await loadDashboard();
-      setStatus("Pengaturan kontak berhasil disimpan.");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Kontak tidak dapat disimpan.");
-    } finally {
-      setIsSaving(false);
-      endLoading();
-    }
+      isContactDirtyRef.current = false;
+      showStatus("success", "Pengaturan kontak berhasil disimpan.");
+    }).catch((error) => showStatus("danger", error instanceof Error ? error.message : "Kontak tidak dapat disimpan."));
   };
 
   const saveAboutProfile = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsSaving(true);
-    const endLoading = beginLoading();
 
-    try {
+    await runBusy("profile-save", async () => {
       await upsertSiteSetting("about_profile", aboutProfile);
-      await loadDashboard();
-      setStatus("Profil berhasil disimpan.");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Profil tidak dapat disimpan.");
-    } finally {
-      setIsSaving(false);
-      endLoading();
-    }
+      isAboutDirtyRef.current = false;
+      showStatus("success", "Profil berhasil disimpan.");
+    }).catch((error) => showStatus("danger", error instanceof Error ? error.message : "Profil tidak dapat disimpan."));
   };
 
   const handleSignOut = async () => {
-    const endLoading = beginLoading();
-
-    try {
+    await runBusy("logout", async () => {
       await signOut();
-    } finally {
-      endLoading();
-    }
+    }).catch((error) => showStatus("danger", error instanceof Error ? error.message : "Logout gagal."));
   };
 
+  const changeMediaPage = async (page: number) => {
+    const nextPage = Math.min(Math.max(page, 0), mediaPageCount - 1);
+    setMediaPage(nextPage);
+    await loadMediaPage(nextPage).catch((error) => showStatus("danger", error instanceof Error ? error.message : "Media tidak dapat dimuat."));
+  };
+
+  const renderStatusBadges = (item: PortfolioRow) => (
+    <div className="flex flex-wrap gap-1.5">
+      {item.is_home ? <StatusBadge tone="success">Beranda</StatusBadge> : null}
+      {item.is_featured ? <StatusBadge tone="success">Unggulan</StatusBadge> : null}
+      {item.is_published ? <StatusBadge tone="success">Terbit</StatusBadge> : <StatusBadge>Draf</StatusBadge>}
+    </div>
+  );
+
   return (
-    <section className="min-h-screen bg-bg lg:h-screen lg:overflow-hidden">
+    <section className="min-h-screen bg-bg text-text lg:h-screen lg:overflow-hidden">
       {isSidebarOpen ? (
         <button
           type="button"
@@ -539,96 +720,98 @@ function AdminDashboardPage() {
 
       <div className="flex min-h-screen lg:h-screen">
         <aside
-          className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[18rem] flex-col overflow-hidden border-r border-line bg-card shadow-lift transition-transform duration-300 lg:sticky lg:top-0 lg:z-20 lg:translate-x-0 lg:shadow-none ${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } ${isSidebarCollapsed ? "lg:w-[5.5rem]" : "lg:w-[18rem]"}`}
+          className={cx(
+            "fixed inset-y-0 left-0 z-50 flex h-screen flex-col border-r border-line bg-card shadow-lift transition-[width,transform] duration-300 lg:sticky lg:top-0 lg:z-20 lg:translate-x-0 lg:shadow-none",
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+            isSidebarCollapsed ? "w-[5.5rem]" : "w-[18.5rem]",
+          )}
         >
-          <div className="flex h-16 items-center justify-between border-b border-line px-4">
-            <div className={`min-w-0 ${isSidebarCollapsed ? "lg:hidden" : ""}`}>
-              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.045em] text-muted">CMS privat</p>
-              <p className="truncate text-[0.98rem] font-bold tracking-[-0.035em] text-text">FADD GRAPHICS</p>
+          <div className="flex h-16 items-center justify-between border-b border-line px-3.5">
+            <div className={cx("min-w-0", isSidebarCollapsed && "lg:hidden")}>
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-muted">CMS privat</p>
+              <p className="truncate text-[1rem] font-extrabold tracking-[-0.04em] text-text">FADD GRAPHICS</p>
             </div>
             <div className="flex items-center gap-2">
-              <button
+              <AdminShellButton
                 type="button"
+                variant="secondary"
+                className="hidden h-10 w-10 px-0 lg:inline-flex"
                 aria-label={isSidebarCollapsed ? "Perluas sidebar" : "Ciutkan sidebar"}
-                className="hidden h-10 w-10 items-center justify-center rounded-xl border border-line bg-surface text-text hover:border-accent/60 hover:text-accent lg:flex"
                 onClick={() => setIsSidebarCollapsed((currentValue) => !currentValue)}
               >
                 {isSidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-              </button>
-              <button
+              </AdminShellButton>
+              <AdminShellButton
                 type="button"
+                variant="secondary"
+                className="h-10 w-10 px-0 lg:hidden"
                 aria-label="Tutup sidebar"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-surface text-text hover:border-accent/60 hover:text-accent lg:hidden"
                 onClick={() => setIsSidebarOpen(false)}
               >
                 <X className="h-4 w-4" />
-              </button>
+              </AdminShellButton>
             </div>
           </div>
 
-          <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 py-4">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
+          <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
+            <div className="space-y-1">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
 
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setIsSidebarOpen(false);
-                  }}
-                  className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-[0.9rem] font-semibold ${
-                    isActive ? "bg-text text-bg shadow-soft" : "text-muted hover:bg-surface hover:text-text"
-                  } ${isSidebarCollapsed ? "lg:justify-center lg:px-0" : ""}`}
-                  title={isSidebarCollapsed ? tab.label : undefined}
-                >
-                  <Icon className="h-4.5 w-4.5 shrink-0" />
-                  <span className={isSidebarCollapsed ? "lg:hidden" : ""}>{tab.label}</span>
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setIsSidebarOpen(false);
+                    }}
+                    title={isSidebarCollapsed ? tab.label : undefined}
+                    className={cx(
+                      "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[0.88rem] font-bold transition",
+                      isActive ? "bg-text text-bg shadow-soft" : "text-muted hover:bg-surface hover:text-text",
+                      isSidebarCollapsed && "lg:justify-center lg:px-0",
+                    )}
+                  >
+                    <Icon className="h-[1.125rem] w-[1.125rem] shrink-0" />
+                    <span className={cx("truncate", isSidebarCollapsed && "lg:hidden")}>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </nav>
 
           <div className="border-t border-line p-3">
             <button
               type="button"
-              className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-[0.9rem] font-semibold text-muted hover:bg-surface hover:text-text ${
-                isSidebarCollapsed ? "lg:justify-center lg:px-0" : ""
-              }`}
-              onClick={handleSignOut}
+              onClick={() => void handleSignOut()}
               title={isSidebarCollapsed ? "Keluar" : undefined}
+              className={cx(
+                "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[0.88rem] font-bold text-muted transition hover:bg-surface hover:text-text",
+                isSidebarCollapsed && "lg:justify-center lg:px-0",
+              )}
             >
-              <LogOut className="h-4.5 w-4.5 shrink-0" />
-              <span className={isSidebarCollapsed ? "lg:hidden" : ""}>Keluar</span>
+              {busyKeys.has("logout") ? <Loader2 className="h-[1.125rem] w-[1.125rem] animate-spin" /> : <LogOut className="h-[1.125rem] w-[1.125rem]" />}
+              <span className={cx(isSidebarCollapsed && "lg:hidden")}>Keluar</span>
             </button>
           </div>
         </aside>
 
         <div className="min-w-0 flex-1 lg:h-screen lg:min-h-0 lg:overflow-y-auto">
-          <header className="sticky top-0 z-30 border-b border-line bg-bg">
+          <header className="sticky top-0 z-30 border-b border-line bg-bg/95 backdrop-blur">
             <div className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 sm:px-6 xl:px-8">
               <div className="flex min-w-0 items-center gap-3">
-                <button
-                  type="button"
-                  aria-label="Buka menu admin"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-card text-text hover:border-accent/60 hover:text-accent lg:hidden"
-                  onClick={() => setIsSidebarOpen(true)}
-                >
-                  <Menu className="h-4.5 w-4.5" />
-                </button>
+                <AdminShellButton type="button" variant="secondary" className="h-10 w-10 px-0 lg:hidden" aria-label="Buka menu admin" onClick={() => setIsSidebarOpen(true)}>
+                  <Menu className="h-[1.125rem] w-[1.125rem]" />
+                </AdminShellButton>
                 <div className="min-w-0">
-                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.045em] text-muted">{activeTabData.label}</p>
-                  <h1 className="truncate text-[1.45rem] font-bold leading-tight tracking-[-0.045em] text-text sm:text-[1.75rem]">
-                    Dashboard admin
-                  </h1>
+                  <p className="text-[0.7rem] font-bold uppercase tracking-[0.07em] text-muted">{tabs.find((tab) => tab.id === activeTab)?.label}</p>
+                  <h1 className="truncate text-[1.35rem] font-extrabold tracking-[-0.045em] text-text sm:text-[1.7rem]">Dashboard admin</h1>
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <span className="hidden max-w-[16rem] truncate rounded-full border border-line bg-card px-3.5 py-2 text-[0.78rem] font-semibold text-muted sm:block">
+                <span className="hidden max-w-[15rem] truncate rounded-full border border-line bg-card px-3 py-2 text-[0.78rem] font-semibold text-muted sm:block">
                   {user?.email}
                 </span>
                 <ThemeToggle theme={theme} onToggle={toggleTheme} />
@@ -636,365 +819,516 @@ function AdminDashboardPage() {
             </div>
           </header>
 
-          <main className="px-4 py-5 sm:px-6 sm:py-6 xl:px-8 2xl:px-10">
-            <div className="mx-auto w-full max-w-[1720px]">
-              <div className="mb-6 rounded-3xl border border-line bg-card px-5 py-4 shadow-soft sm:px-6">
-                <p className="admin-kicker">Dashboard privat</p>
-                <p className="mt-1 text-[0.94rem] leading-6 text-muted">
-                  Kelola portofolio, media, identitas visual website, profil, dan kontak dari satu tempat.
-                </p>
+          <main className="px-4 py-5 sm:px-6 xl:px-8">
+            <div className="w-full space-y-5">
+              <div className="flex flex-col gap-3 rounded-2xl border border-line bg-card p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-muted">Ruang kerja CMS</p>
+                  <p className="mt-1 text-[0.92rem] leading-6 text-muted">
+                    Kelola portofolio, media, identitas website, profil, dan kontak tanpa memuat ulang dashboard.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <AdminShellButton type="button" variant="primary" onClick={() => {
+                    resetFormState();
+                    setActiveTab("portofolio");
+                  }}>
+                    <Plus className="h-4 w-4" />
+                    Portofolio baru
+                  </AdminShellButton>
+                  <label className="inline-flex min-h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-card px-3.5 py-2 text-[0.82rem] font-semibold text-text transition hover:border-accent/70 hover:text-accent">
+                    <Upload className="h-4 w-4" />
+                    Unggah media
+                    <input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" multiple className="hidden" onChange={handleMediaUpload} />
+                  </label>
+                </div>
               </div>
 
               {status ? (
-                <p className="mb-6 rounded-2xl border border-line bg-card px-4 py-3 text-[0.92rem] leading-6 text-muted">
-                  {status}
-                </p>
-              ) : null}
-
-              <div className="min-w-0">
-          {activeTab === "ringkasan" ? (
-            <div className="grid gap-5">
-              <div className="grid gap-4 md:grid-cols-3">
-                {[
-                  { label: "Total portofolio", value: items.length },
-                  { label: "Media tersimpan", value: mediaAssets.length },
-                  { label: "Aset identitas aktif", value: siteAssets.filter((asset) => asset.is_active).length },
-                ].map((card) => (
-                  <article key={card.label} className="admin-panel rounded-[1.45rem] p-5">
-                    <p className="editorial-note">{card.label}</p>
-                    <p className="mt-4 text-[2.4rem] font-extrabold tracking-[-0.06em] text-text">{card.value}</p>
-                  </article>
-                ))}
-              </div>
-              <div className="admin-panel rounded-[1.6rem] p-5 sm:p-6">
-                <p className="editorial-note">Status konten</p>
-                <div className="mt-5 grid gap-3 md:grid-cols-3">
-                  <p className="rounded-[1rem] border border-line bg-surface p-4 text-[0.92rem] leading-6 text-muted">
-                    Beranda: {items.filter((item) => item.is_home).length} item tampil di highlight halaman utama.
-                  </p>
-                  <p className="rounded-[1rem] border border-line bg-surface p-4 text-[0.92rem] leading-6 text-muted">
-                    Unggulan: {items.filter((item) => item.is_featured).length} item dipakai sebagai karya pilihan.
-                  </p>
-                  <p className="rounded-[1rem] border border-line bg-surface p-4 text-[0.92rem] leading-6 text-muted">
-                    Terbit: {items.filter((item) => item.is_published).length} item tampil di halaman portofolio.
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {activeTab === "portofolio" ? (
-            <div className="grid gap-6 2xl:grid-cols-[0.95fr_1.05fr]">
-              <form className="admin-panel rounded-[1.6rem] p-5 sm:p-6" onSubmit={handleSubmit}>
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="editorial-note">{selectedItemId ? "Edit portofolio" : "Portofolio baru"}</p>
-                    <h2 className="mt-2 text-[1.45rem] font-bold tracking-[-0.045em] text-text">
-                      {selectedItemId ? formValues.title : "Tambah item"}
-                    </h2>
-                  </div>
-                  <button type="button" className="button-secondary" onClick={resetForm}>
-                    <Plus className="h-4 w-4" />
-                    Baru
+                <div className={cx(
+                  "flex items-start justify-between gap-3 rounded-2xl border px-4 py-3 text-[0.9rem] leading-6",
+                  status.tone === "success" && "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+                  status.tone === "danger" && "border-red-500/25 bg-red-500/10 text-red-700 dark:text-red-300",
+                  status.tone === "normal" && "border-line bg-card text-muted",
+                )}>
+                  <span>{status.text}</span>
+                  <button type="button" aria-label="Tutup pesan" className="text-current opacity-70 hover:opacity-100" onClick={() => setStatus(null)}>
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
+              ) : null}
 
-                <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Judul</span>
-                    <input className="input-shell" value={formValues.title} onChange={updateField("title")} required />
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Slug</span>
-                    <input className="input-shell" value={formValues.slug} onChange={updateField("slug")} placeholder="otomatis dari judul" />
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Kategori</span>
-                    <select className="input-shell" value={formValues.category} onChange={updateField("category")}>
-                      {categoryOptions.map((category) => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Tata letak</span>
-                    <select className="input-shell" value={formValues.layout} onChange={updateField("layout")}>
-                      {layoutOptions.map((layout) => (
-                        <option key={layout} value={layout}>{layout}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Hasil kerja</span>
-                    <input className="input-shell" value={formValues.deliverable} onChange={updateField("deliverable")} />
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Nuansa</span>
-                    <input className="input-shell" value={formValues.tone} onChange={updateField("tone")} />
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Label CTA</span>
-                    <input className="input-shell" value={formValues.ctaLabel} onChange={updateField("ctaLabel")} />
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Path detail</span>
-                    <input className="input-shell" value={formValues.detailPath} onChange={updateField("detailPath")} />
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text sm:col-span-2">
-                    <span>Fokus</span>
-                    <input className="input-shell" value={formValues.focus} onChange={updateField("focus")} />
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text sm:col-span-2">
-                    <span>Ringkasan</span>
-                    <textarea className="input-shell min-h-[110px] resize-none" value={formValues.summary} onChange={updateField("summary")} />
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text sm:col-span-2">
-                    <span>Tag</span>
-                    <input className="input-shell" value={formValues.tags} onChange={updateField("tags")} placeholder="Logo, Branding, Editorial" />
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Urutan</span>
-                    <input className="input-shell" type="number" value={formValues.sortOrder} onChange={updateField("sortOrder")} />
-                  </label>
-                  <div className="grid gap-3 rounded-[1.1rem] border border-line bg-surface p-4">
+              {isInitialLoading ? (
+                <SectionCard className="flex min-h-[22rem] items-center justify-center p-8">
+                  <div className="flex items-center gap-3 text-[0.9rem] font-semibold text-muted">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Memuat data admin
+                  </div>
+                </SectionCard>
+              ) : null}
+
+              {!isInitialLoading && activeTab === "ringkasan" ? (
+                <div className="space-y-5">
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
                     {[
-                      ["isHome", "Beranda"],
-                      ["isFeatured", "Unggulan"],
-                      ["isPublished", "Terbit"],
-                    ].map(([field, label]) => (
-                      <label key={field} className="flex items-center justify-between gap-4 text-[0.82rem] font-semibold uppercase tracking-[0.06em] text-text">
-                        <span>{label}</span>
-                        <input type="checkbox" checked={Boolean(formValues[field as keyof PortfolioFormState])} onChange={updateField(field as keyof PortfolioFormState)} />
-                      </label>
+                      ["Portofolio", stats.total],
+                      ["Media", stats.media],
+                      ["Beranda", stats.home],
+                      ["Unggulan", stats.featured],
+                      ["Terbit", stats.published],
+                      ["Draf", stats.draft],
+                    ].map(([label, value]) => (
+                      <SectionCard key={label} className="p-4">
+                        <p className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-muted">{label}</p>
+                        <p className="mt-3 text-[2rem] font-black tracking-[-0.06em] text-text">{value}</p>
+                      </SectionCard>
                     ))}
                   </div>
-                </div>
 
-                <div className="mt-5 grid gap-3 rounded-[1.2rem] border border-line bg-surface p-4">
-                  <label className="button-secondary cursor-pointer justify-center">
-                    <Upload className="h-4 w-4" />
-                    Unggah gambar utama
-                    <input key={`main-${formResetKey}`} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" className="hidden" onChange={handleMainImageUpload} />
-                  </label>
-                  {formValues.imageUrl ? (
-                    <img src={formValues.imageUrl} alt="" className="max-h-48 w-full rounded-[1rem] object-contain" />
-                  ) : (
-                    <p className="rounded-[1rem] border border-line bg-card px-4 py-4 text-center text-[0.9rem] leading-6 text-muted">Belum ada gambar utama.</p>
-                  )}
-                  <label className="button-secondary cursor-pointer justify-center">
-                    <Upload className="h-4 w-4" />
-                    Unggah galeri
-                    <input key={`gallery-${formResetKey}`} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" multiple className="hidden" onChange={handleGalleryUpload} />
-                  </label>
-                  {formValues.galleryUrls.length ? (
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {formValues.galleryUrls.map((url, index) => (
-                        <div key={`${url}-${index}`} className="relative overflow-hidden rounded-[0.8rem] border border-line bg-card">
-                          <img src={url} alt="" className="aspect-[4/3] w-full object-cover" />
-                          <div className="absolute inset-x-1.5 top-1.5 flex justify-between gap-1">
-                            <button type="button" aria-label="Pindah kiri" className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/75 text-white hover:bg-accent" onClick={() => moveGalleryImage(index, -1)}>
-                              <ChevronLeft className="h-4 w-4" />
-                            </button>
-                            <button type="button" aria-label="Pindah kanan" className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/75 text-white hover:bg-accent" onClick={() => moveGalleryImage(index, 1)}>
-                              <ChevronRight className="h-4 w-4" />
-                            </button>
-                          </div>
-                          <button type="button" aria-label="Lepas gambar galeri" className="absolute bottom-1.5 right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/75 text-white hover:bg-accent" onClick={() => handleRemoveGalleryImage(index)}>
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-
-                <button type="submit" className="button-primary mt-6 w-full justify-center" disabled={isSaving}>
-                  <Save className="h-4 w-4" />
-                  Simpan portofolio
-                </button>
-              </form>
-
-              <div className="admin-panel rounded-[1.6rem] p-5 sm:p-6">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="editorial-note">Daftar portofolio</p>
-                    <h2 className="mt-2 text-[1.45rem] font-bold tracking-[-0.045em] text-text">{items.length} item</h2>
-                  </div>
-                </div>
-                <div className="mt-6 grid gap-3">
-                  {isLoading ? <div className="min-h-[12rem]" aria-hidden="true" /> : null}
-                  {!isLoading && !items.length ? (
-                    <p className="rounded-[1rem] border border-line bg-surface px-4 py-3 text-[0.92rem] leading-6 text-muted">Belum ada portofolio dari Supabase.</p>
-                  ) : null}
-                  {items.map((item, index) => (
-                    <article key={item.id} className="rounded-[1.2rem] border border-line bg-surface p-4">
-                      <div className="flex gap-4">
-                        {item.image_url ? <img src={item.image_url} alt="" className="h-20 w-28 shrink-0 rounded-[0.8rem] object-cover" /> : null}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="editorial-note">{item.category}</span>
-                            {item.is_home ? <span className="rounded-full border border-lineStrong/70 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.06em] text-muted">Beranda</span> : null}
-                            {item.is_featured ? <span className="rounded-full border border-lineStrong/70 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.06em] text-muted">Unggulan</span> : null}
-                            {item.is_published ? <span className="rounded-full border border-lineStrong/70 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.06em] text-muted">Terbit</span> : null}
-                            {!item.is_home && !item.is_featured && !item.is_published ? <span className="rounded-full border border-lineStrong/70 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.06em] text-muted">Draf</span> : null}
-                          </div>
-                          <h3 className="mt-2 truncate text-[1.05rem] font-bold tracking-[-0.04em] text-text">{item.title}</h3>
-                          <p className="mt-1 truncate text-[0.88rem] leading-6 text-muted">{item.slug}</p>
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <button type="button" className="button-secondary" onClick={() => handleEdit(item)}><SquarePen className="h-4 w-4" />Edit</button>
-                            <button type="button" className="button-secondary" onClick={() => handleMoveItem(index, -1)} disabled={index === 0}><ChevronUp className="h-4 w-4" />Naik</button>
-                            <button type="button" className="button-secondary" onClick={() => handleMoveItem(index, 1)} disabled={index === items.length - 1}><ChevronDown className="h-4 w-4" />Turun</button>
-                            <button type="button" className="button-secondary" onClick={() => handleDelete(item)}><Trash2 className="h-4 w-4" />Hapus</button>
-                          </div>
+                  <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+                    <SectionCard className="p-5">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-muted">Update terbaru</p>
+                          <h2 className="mt-1 text-[1.25rem] font-extrabold tracking-[-0.04em] text-text">Aktivitas konten</h2>
                         </div>
                       </div>
-                    </article>
+                      <div className="mt-5 overflow-hidden rounded-xl border border-line">
+                        {recentItems.length ? (
+                          <div className="divide-y divide-line">
+                            {recentItems.map((item) => (
+                              <button key={item.id} type="button" className="grid w-full gap-3 bg-card p-4 text-left hover:bg-surface md:grid-cols-[1fr_auto] md:items-center" onClick={() => handleEdit(item)}>
+                                <div className="min-w-0">
+                                  <p className="truncate text-[0.95rem] font-bold text-text">{item.title}</p>
+                                  <p className="mt-1 text-[0.78rem] text-muted">{formatDate(item.updated_at)}</p>
+                                </div>
+                                {renderStatusBadges(item)}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <EmptyState>Belum ada update portofolio.</EmptyState>
+                        )}
+                      </div>
+                    </SectionCard>
+
+                    <SectionCard className="p-5">
+                      <p className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-muted">Aksi cepat</p>
+                      <h2 className="mt-1 text-[1.25rem] font-extrabold tracking-[-0.04em] text-text">Mulai kerja</h2>
+                      <div className="mt-5 grid gap-3">
+                        <AdminShellButton type="button" variant="primary" className="justify-start" onClick={() => {
+                          resetFormState();
+                          setActiveTab("portofolio");
+                        }}>
+                          <Plus className="h-4 w-4" />
+                          Tambah portofolio
+                        </AdminShellButton>
+                        <label className="inline-flex min-h-10 cursor-pointer items-center justify-start gap-2 rounded-xl border border-line bg-card px-3.5 py-2 text-[0.82rem] font-semibold text-text transition hover:border-accent/70 hover:text-accent">
+                          <Upload className="h-4 w-4" />
+                          Unggah aset visual
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" multiple className="hidden" onChange={handleMediaUpload} />
+                        </label>
+                        <AdminShellButton type="button" variant="secondary" className="justify-start" onClick={() => setActiveTab("identitas")}>
+                          <FileImage className="h-4 w-4" />
+                          Kelola identitas website
+                        </AdminShellButton>
+                      </div>
+                    </SectionCard>
+                  </div>
+                </div>
+              ) : null}
+
+              {!isInitialLoading && activeTab === "portofolio" ? (
+                <div className="grid gap-5 2xl:grid-cols-[minmax(24rem,0.82fr)_minmax(0,1.18fr)]">
+                  <SectionCard className="p-5">
+                    <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-muted">{selectedItemId ? "Mode edit" : "Mode buat"}</p>
+                        <h2 className="mt-1 truncate text-[1.3rem] font-extrabold tracking-[-0.045em] text-text">{selectedItemId ? formValues.title || selectedItem?.title : "Portofolio baru"}</h2>
+                      </div>
+                      <AdminShellButton type="button" variant="secondary" onClick={resetFormState}>
+                        <Plus className="h-4 w-4" />
+                        Baru
+                      </AdminShellButton>
+                    </div>
+
+                    <form className="mt-5 space-y-5" onSubmit={handleSubmitPortfolio}>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="space-y-2">
+                          <FieldLabel>Judul</FieldLabel>
+                          <input className="input-shell" value={formValues.title} onChange={updateField("title")} required />
+                        </label>
+                        <label className="space-y-2">
+                          <FieldLabel>Slug</FieldLabel>
+                          <input className="input-shell" value={formValues.slug} onChange={updateField("slug")} placeholder="otomatis dari judul" />
+                        </label>
+                        <label className="space-y-2">
+                          <FieldLabel>Kategori</FieldLabel>
+                          <select className="input-shell" value={formValues.category} onChange={updateField("category")}>
+                            {categoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
+                          </select>
+                        </label>
+                        <label className="space-y-2">
+                          <FieldLabel>Tata letak</FieldLabel>
+                          <select className="input-shell" value={formValues.layout} onChange={updateField("layout")}>
+                            {layoutOptions.map((layout) => <option key={layout} value={layout}>{layout}</option>)}
+                          </select>
+                        </label>
+                        <label className="space-y-2">
+                          <FieldLabel>Hasil kerja</FieldLabel>
+                          <input className="input-shell" value={formValues.deliverable} onChange={updateField("deliverable")} />
+                        </label>
+                        <label className="space-y-2">
+                          <FieldLabel>Nuansa</FieldLabel>
+                          <input className="input-shell" value={formValues.tone} onChange={updateField("tone")} />
+                        </label>
+                        <label className="space-y-2">
+                          <FieldLabel>Label CTA</FieldLabel>
+                          <input className="input-shell" value={formValues.ctaLabel} onChange={updateField("ctaLabel")} />
+                        </label>
+                        <label className="space-y-2">
+                          <FieldLabel>Path detail</FieldLabel>
+                          <input className="input-shell" value={formValues.detailPath} onChange={updateField("detailPath")} />
+                        </label>
+                        <label className="space-y-2 sm:col-span-2">
+                          <FieldLabel>Fokus</FieldLabel>
+                          <input className="input-shell" value={formValues.focus} onChange={updateField("focus")} />
+                        </label>
+                        <label className="space-y-2 sm:col-span-2">
+                          <FieldLabel>Ringkasan</FieldLabel>
+                          <textarea className="input-shell min-h-[104px] resize-none" value={formValues.summary} onChange={updateField("summary")} />
+                        </label>
+                        <label className="space-y-2 sm:col-span-2">
+                          <FieldLabel>Tag</FieldLabel>
+                          <input className="input-shell" value={formValues.tags} onChange={updateField("tags")} placeholder="Logo, Branding, Editorial" />
+                        </label>
+                        <label className="space-y-2">
+                          <FieldLabel>Urutan</FieldLabel>
+                          <input className="input-shell" type="number" value={formValues.sortOrder} onChange={updateField("sortOrder")} />
+                        </label>
+                        <div className="grid gap-2 rounded-xl border border-line bg-surface p-3">
+                          {[
+                            ["isHome", "Beranda"],
+                            ["isFeatured", "Unggulan"],
+                            ["isPublished", "Terbit"],
+                          ].map(([field, label]) => (
+                            <label key={field} className="flex min-h-9 items-center justify-between gap-3 text-[0.78rem] font-bold uppercase tracking-[0.06em] text-text">
+                              <span>{label}</span>
+                              <input type="checkbox" checked={Boolean(formValues[field as keyof PortfolioFormState])} onChange={updateField(field as keyof PortfolioFormState)} />
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 rounded-xl border border-line bg-surface p-4">
+                        <div className="flex flex-wrap gap-2">
+                          <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-card px-3.5 py-2 text-[0.82rem] font-semibold text-text transition hover:border-accent/70 hover:text-accent">
+                            {busyKeys.has("main-upload") ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                            Gambar utama
+                            <input key={`main-${formResetKey}`} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" className="hidden" onChange={handleMainImageUpload} />
+                          </label>
+                          <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-card px-3.5 py-2 text-[0.82rem] font-semibold text-text transition hover:border-accent/70 hover:text-accent">
+                            {busyKeys.has("gallery-upload") ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                            Galeri
+                            <input key={`gallery-${formResetKey}`} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" multiple className="hidden" onChange={handleGalleryUpload} />
+                          </label>
+                        </div>
+
+                        {formValues.imageUrl ? (
+                          <div className="overflow-hidden rounded-xl border border-line bg-card">
+                            <img src={formValues.imageUrl} alt="" className="max-h-56 w-full object-contain" />
+                          </div>
+                        ) : (
+                          <EmptyState>Belum ada gambar utama.</EmptyState>
+                        )}
+
+                        {formValues.galleryUrls.length ? (
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            {formValues.galleryUrls.map((url, index) => (
+                              <div key={`${url}-${index}`} className="relative overflow-hidden rounded-xl border border-line bg-card">
+                                <img src={url} alt="" className="aspect-[4/3] w-full object-cover" loading="lazy" />
+                                <div className="absolute inset-x-1.5 top-1.5 flex justify-between gap-1">
+                                  <button type="button" aria-label="Pindah kiri" className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/75 text-white hover:bg-accent" onClick={() => moveGalleryImage(index, -1)}>
+                                    <ChevronLeft className="h-4 w-4" />
+                                  </button>
+                                  <button type="button" aria-label="Pindah kanan" className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/75 text-white hover:bg-accent" onClick={() => moveGalleryImage(index, 1)}>
+                                    <ChevronRight className="h-4 w-4" />
+                                  </button>
+                                </div>
+                                <button type="button" aria-label="Lepas gambar galeri" className="absolute bottom-1.5 right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/75 text-white hover:bg-red-600" onClick={() => void handleRemoveGalleryImage(index)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <AdminShellButton type="submit" variant="primary" className="w-full" disabled={busyKeys.has("portfolio-save")}>
+                        {busyKeys.has("portfolio-save") ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        {selectedItemId ? "Simpan perubahan" : "Buat portofolio"}
+                      </AdminShellButton>
+                    </form>
+                  </SectionCard>
+
+                  <SectionCard className="p-5">
+                    <div className="flex flex-col gap-3 border-b border-line pb-4 xl:flex-row xl:items-end xl:justify-between">
+                      <div>
+                        <p className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-muted">Daftar portofolio</p>
+                        <h2 className="mt-1 text-[1.3rem] font-extrabold tracking-[-0.045em] text-text">{filteredItems.length} item tampil</h2>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-[minmax(12rem,1fr)_10rem_10rem] xl:w-[38rem]">
+                        <label className="relative">
+                          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                          <input className="input-shell pl-9" value={portfolioSearch} onChange={(event) => setPortfolioSearch(event.target.value)} placeholder="Cari judul, slug, kategori" />
+                        </label>
+                        <select className="input-shell" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+                          <option value="semua">Semua kategori</option>
+                          {categoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
+                        </select>
+                        <select className="input-shell" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as PortfolioStatusFilter)}>
+                          <option value="semua">Semua status</option>
+                          <option value="beranda">Beranda</option>
+                          <option value="unggulan">Unggulan</option>
+                          <option value="terbit">Terbit</option>
+                          <option value="draf">Draf</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 overflow-hidden rounded-xl border border-line">
+                      {filteredItems.length ? (
+                        <div className="divide-y divide-line">
+                          {filteredItems.map((item) => {
+                            const absoluteIndex = items.findIndex((candidate) => candidate.id === item.id);
+
+                            return (
+                              <article key={item.id} className={cx("grid gap-4 bg-card p-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center", selectedItemId === item.id && "bg-surface")}>
+                                <div className="flex min-w-0 gap-4">
+                                  {item.image_url ? <img src={item.image_url} alt="" className="h-20 w-28 shrink-0 rounded-xl object-cover" loading="lazy" /> : <div className="flex h-20 w-28 shrink-0 items-center justify-center rounded-xl border border-line bg-surface text-muted"><Image className="h-5 w-5" /></div>}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <StatusBadge>{item.category}</StatusBadge>
+                                      {renderStatusBadges(item)}
+                                    </div>
+                                    <h3 className="mt-2 truncate text-[1rem] font-extrabold tracking-[-0.035em] text-text">{item.title}</h3>
+                                    <p className="mt-1 truncate text-[0.82rem] text-muted">{item.slug}</p>
+                                    <p className="mt-1 text-[0.76rem] text-muted">Diperbarui {formatDate(item.updated_at)}</p>
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-2 xl:justify-end">
+                                  <AdminShellButton type="button" variant="secondary" onClick={() => handleEdit(item)}><SquarePen className="h-4 w-4" />Edit</AdminShellButton>
+                                  <AdminShellButton type="button" variant="secondary" onClick={() => void handleMoveItem(absoluteIndex, -1)} disabled={absoluteIndex <= 0}><ArrowUp className="h-4 w-4" />Naik</AdminShellButton>
+                                  <AdminShellButton type="button" variant="secondary" onClick={() => void handleMoveItem(absoluteIndex, 1)} disabled={absoluteIndex < 0 || absoluteIndex === items.length - 1}><ArrowDown className="h-4 w-4" />Turun</AdminShellButton>
+                                  <AdminShellButton type="button" variant="danger" onClick={() => void handleDeletePortfolio(item)}><Trash2 className="h-4 w-4" />Hapus</AdminShellButton>
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <EmptyState>Tidak ada portofolio yang sesuai filter.</EmptyState>
+                      )}
+                    </div>
+                  </SectionCard>
+                </div>
+              ) : null}
+
+              {!isInitialLoading && activeTab === "media" ? (
+                <SectionCard className="p-5">
+                  <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-muted">Media Library</p>
+                      <h2 className="mt-1 text-[1.3rem] font-extrabold tracking-[-0.045em] text-text">{mediaTotal} aset visual</h2>
+                    </div>
+                    <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-text bg-text px-3.5 py-2 text-[0.82rem] font-semibold text-bg transition hover:bg-accent hover:text-white">
+                      {busyKeys.has("media-upload") ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      Unggah media
+                      <input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" multiple className="hidden" onChange={handleMediaUpload} />
+                    </label>
+                  </div>
+
+                  <div className="mt-5">
+                    {busyKeys.has("media-load") ? (
+                      <div className="flex min-h-48 items-center justify-center text-[0.9rem] font-semibold text-muted"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Memuat media</div>
+                    ) : mediaAssets.length ? (
+                      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                        {mediaAssets.map((media) => (
+                          <article key={media.id} className="overflow-hidden rounded-xl border border-line bg-surface">
+                            <div className="border-b border-line bg-card">
+                              <img src={media.url} alt={media.alt_text || media.label} className="aspect-[4/3] w-full object-contain" loading="lazy" />
+                            </div>
+                            <div className="grid gap-2 p-3">
+                              <p className="truncate text-[0.9rem] font-bold text-text">{media.label}</p>
+                              <div className="grid gap-1 text-[0.76rem] text-muted">
+                                <p className="truncate">{media.section} / {media.usage_type}</p>
+                                <p className="truncate">{media.mime_type || "-"} / {formatBytes(media.size_bytes)}</p>
+                                <p className="truncate">{media.path}</p>
+                                <p>{formatDate(media.created_at)}</p>
+                              </div>
+                              <AdminShellButton type="button" variant="danger" className="mt-1 w-full" onClick={() => void handleDeleteMedia(media)} disabled={busyKeys.has("media-delete")}>
+                                <Trash2 className="h-4 w-4" />
+                                Hapus jika tidak dipakai
+                              </AdminShellButton>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    ) : (
+                      <EmptyState>Belum ada media.</EmptyState>
+                    )}
+                  </div>
+
+                  <div className="mt-5 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-[0.82rem] font-semibold text-muted">Halaman {mediaPage + 1} dari {mediaPageCount}</p>
+                    <div className="flex gap-2">
+                      <AdminShellButton type="button" variant="secondary" className="h-10 w-10 px-0" onClick={() => void changeMediaPage(0)} disabled={mediaPage === 0}><ChevronsLeft className="h-4 w-4" /></AdminShellButton>
+                      <AdminShellButton type="button" variant="secondary" className="h-10 w-10 px-0" onClick={() => void changeMediaPage(mediaPage - 1)} disabled={mediaPage === 0}><ChevronLeft className="h-4 w-4" /></AdminShellButton>
+                      <AdminShellButton type="button" variant="secondary" className="h-10 w-10 px-0" onClick={() => void changeMediaPage(mediaPage + 1)} disabled={mediaPage >= mediaPageCount - 1}><ChevronRight className="h-4 w-4" /></AdminShellButton>
+                      <AdminShellButton type="button" variant="secondary" className="h-10 w-10 px-0" onClick={() => void changeMediaPage(mediaPageCount - 1)} disabled={mediaPage >= mediaPageCount - 1}><ChevronsRight className="h-4 w-4" /></AdminShellButton>
+                    </div>
+                  </div>
+                </SectionCard>
+              ) : null}
+
+              {!isInitialLoading && activeTab === "identitas" ? (
+                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  {siteAssetSlots.map((slot) => {
+                    const asset = getAssetByKey(siteAssets, slot.key);
+
+                    return (
+                      <SectionCard key={slot.key} className="p-5">
+                        <p className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-muted">{slot.label}</p>
+                        <p className="mt-2 min-h-10 text-[0.88rem] leading-5 text-muted">{slot.description}</p>
+                        <div className="mt-4 overflow-hidden rounded-xl border border-line bg-surface">
+                          {asset?.url ? <img src={asset.url} alt={asset.alt_text || slot.label} className="max-h-44 w-full object-contain p-4" loading="lazy" /> : <div className="flex min-h-[11rem] items-center justify-center px-5 text-center text-[0.9rem] text-muted">Belum diatur.</div>}
+                        </div>
+                        {asset ? (
+                          <div className="mt-3 grid gap-1 text-[0.75rem] text-muted">
+                            <p className="truncate">{asset.path}</p>
+                            <p>Diperbarui {formatDate(asset.updated_at)}</p>
+                          </div>
+                        ) : null}
+                        <label className="mt-4 inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-card px-3.5 py-2 text-[0.82rem] font-semibold text-text transition hover:border-accent/70 hover:text-accent">
+                          {busyKeys.has("asset-upload") ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                          Ganti aset
+                          <input type="file" accept={slot.accept} className="hidden" onChange={handleSiteAssetUpload(slot.key, slot.label, slot.section)} />
+                        </label>
+                      </SectionCard>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {!isInitialLoading && activeTab === "profil" ? (
+                <div className="grid gap-5 xl:grid-cols-[0.72fr_1.28fr]">
+                  <SectionCard className="p-5">
+                    <p className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-muted">Foto profil</p>
+                    <div className="mt-4 overflow-hidden rounded-xl border border-line bg-surface">
+                      {siteAssetMap.founder_photo?.url ? <img src={siteAssetMap.founder_photo.url} alt="Foto profil" className="aspect-[4/5] w-full object-cover" loading="lazy" /> : <div className="flex aspect-[4/5] items-center justify-center px-6 text-center text-[0.92rem] text-muted">Belum ada foto profil.</div>}
+                    </div>
+                    <label className="mt-4 inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-card px-3.5 py-2 text-[0.82rem] font-semibold text-text transition hover:border-accent/70 hover:text-accent">
+                      {busyKeys.has("asset-upload") ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      Ganti foto profil
+                      <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFounderPhotoUpload} />
+                    </label>
+                  </SectionCard>
+
+                  <SectionCard className="p-5">
+                    <form onSubmit={saveAboutProfile}>
+                      <div className="border-b border-line pb-4">
+                        <p className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-muted">Data profil</p>
+                        <h2 className="mt-1 text-[1.3rem] font-extrabold tracking-[-0.045em] text-text">Informasi About</h2>
+                      </div>
+                      <div className="mt-5 grid gap-4">
+                        <label className="space-y-2">
+                          <FieldLabel>Nama</FieldLabel>
+                          <input className="input-shell" value={aboutProfile.name} onChange={(event) => {
+                            isAboutDirtyRef.current = true;
+                            setAboutProfile((profile) => ({ ...profile, name: event.target.value }));
+                          }} />
+                        </label>
+                        <label className="space-y-2">
+                          <FieldLabel>Peran</FieldLabel>
+                          <input className="input-shell" value={aboutProfile.role} onChange={(event) => {
+                            isAboutDirtyRef.current = true;
+                            setAboutProfile((profile) => ({ ...profile, role: event.target.value }));
+                          }} />
+                        </label>
+                        <label className="space-y-2">
+                          <FieldLabel>Bio singkat</FieldLabel>
+                          <textarea className="input-shell min-h-[104px] resize-none" value={aboutProfile.shortBio} onChange={(event) => {
+                            isAboutDirtyRef.current = true;
+                            setAboutProfile((profile) => ({ ...profile, shortBio: event.target.value }));
+                          }} />
+                        </label>
+                        <label className="space-y-2">
+                          <FieldLabel>Bio detail</FieldLabel>
+                          <textarea className="input-shell min-h-[148px] resize-none" value={aboutProfile.detailBio} onChange={(event) => {
+                            isAboutDirtyRef.current = true;
+                            setAboutProfile((profile) => ({ ...profile, detailBio: event.target.value }));
+                          }} />
+                        </label>
+                      </div>
+                      <AdminShellButton type="submit" variant="primary" className="mt-5 w-full" disabled={busyKeys.has("profile-save")}>
+                        {busyKeys.has("profile-save") ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        Simpan profil
+                      </AdminShellButton>
+                    </form>
+                  </SectionCard>
+                </div>
+              ) : null}
+
+              {!isInitialLoading && activeTab === "kontak" ? (
+                <SectionCard className="p-5">
+                  <form onSubmit={saveContactSettings}>
+                    <div className="flex flex-col gap-2 border-b border-line pb-4 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <p className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-muted">Kontak publik</p>
+                        <h2 className="mt-1 text-[1.3rem] font-extrabold tracking-[-0.045em] text-text">Link yang tampil di website</h2>
+                      </div>
+                      <AdminShellButton type="submit" variant="primary" disabled={busyKeys.has("contact-save")}>
+                        {busyKeys.has("contact-save") ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        Simpan kontak
+                      </AdminShellButton>
+                    </div>
+                    <div className="mt-5 grid gap-3">
+                      {contactLinks.map((link, index) => (
+                        <article key={`${link.type}-${index}`} className="grid gap-3 rounded-xl border border-line bg-surface p-4 xl:grid-cols-[0.85fr_1fr_1.4fr_0.8fr_auto] xl:items-center">
+                          <input className="input-shell" value={link.label} onChange={updateContactLink(index, "label")} placeholder="Label" />
+                          <input className="input-shell" value={link.value} onChange={updateContactLink(index, "value")} placeholder="Teks tampil" />
+                          <input className="input-shell" value={link.href} onChange={updateContactLink(index, "href")} placeholder="URL" />
+                          <select className="input-shell" value={link.type} onChange={updateContactLink(index, "type")}>
+                            {["whatsapp", "email", "instagram", "linkedin", "other"].map((type) => <option key={type} value={type}>{type}</option>)}
+                          </select>
+                          <label className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-card px-4 py-3 text-[0.78rem] font-bold uppercase tracking-[0.06em] text-text">
+                            Aktif
+                            <input type="checkbox" checked={link.isActive} onChange={updateContactLink(index, "isActive")} />
+                          </label>
+                        </article>
+                      ))}
+                    </div>
+                  </form>
+                </SectionCard>
+              ) : null}
+
+              {!isInitialLoading && activeTab === "pengaturan" ? (
+                <div className="grid gap-5 xl:grid-cols-3">
+                  {[
+                    ["Storage", "Semua gambar baru disimpan di bucket site-media dan metadata disimpan di tabel media_assets."],
+                    ["Portofolio", "Metadata karya berada di portfolio_items. Gambar utama dan galeri disinkronkan melalui portfolio_images."],
+                    ["Keamanan", "Media yang masih dipakai oleh website atau portofolio tidak bisa dihapus dari Media Library."],
+                    ["Operasional", "Gunakan tombol Baru untuk memulai item baru. Mode edit hanya memperbarui item yang sedang dipilih."],
+                    ["Publikasi", "Beranda, Unggulan, dan Terbit dapat diaktifkan secara terpisah untuk setiap portofolio."],
+                    ["Performa", "Media Library dimuat per halaman agar dashboard tetap ringan saat aset bertambah banyak."],
+                  ].map(([title, text]) => (
+                    <SectionCard key={title} className="p-5">
+                      <p className="text-[0.72rem] font-bold uppercase tracking-[0.07em] text-muted">{title}</p>
+                      <p className="mt-3 text-[0.92rem] leading-6 text-muted">{text}</p>
+                    </SectionCard>
                   ))}
                 </div>
-              </div>
-            </div>
-          ) : null}
-
-          {activeTab === "media" ? (
-            <div className="admin-panel rounded-[1.6rem] p-5 sm:p-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="editorial-note">Media Library</p>
-                  <h2 className="mt-2 text-[1.45rem] font-bold tracking-[-0.045em] text-text">Semua aset visual</h2>
-                </div>
-                <label className="button-primary cursor-pointer">
-                  <Upload className="h-4 w-4" />
-                  Unggah media
-                  <input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" multiple className="hidden" onChange={handleMediaUpload} />
-                </label>
-              </div>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {mediaAssets.map((media) => (
-                  <article key={media.id} className="rounded-[1.2rem] border border-line bg-surface p-3">
-                    <div className="overflow-hidden rounded-[0.95rem] border border-line bg-card">
-                      <img src={media.url} alt={media.alt_text || media.label} className="aspect-[4/3] w-full object-contain" loading="lazy" />
-                    </div>
-                    <div className="mt-3 grid gap-1.5">
-                      <p className="truncate text-[0.92rem] font-semibold text-text">{media.label}</p>
-                      <p className="truncate text-[0.78rem] text-muted">{media.section} / {media.usage_type}</p>
-                      <p className="truncate text-[0.78rem] text-muted">{media.path}</p>
-                    </div>
-                    <button type="button" className="button-secondary mt-3 w-full justify-center" onClick={() => handleDeleteMedia(media)}>
-                      <Trash2 className="h-4 w-4" />
-                      Hapus jika tidak dipakai
-                    </button>
-                  </article>
-                ))}
-                {!mediaAssets.length ? <p className="rounded-[1rem] border border-line bg-surface px-4 py-5 text-center text-[0.92rem] leading-6 text-muted sm:col-span-2 xl:col-span-3">Belum ada media.</p> : null}
-              </div>
-            </div>
-          ) : null}
-
-          {activeTab === "identitas" ? (
-            <div className="grid gap-5 md:grid-cols-2">
-              {siteAssetSlots.map((slot) => {
-                const asset = getAssetByKey(siteAssets, slot.key);
-
-                return (
-                  <article key={slot.key} className="admin-panel rounded-[1.5rem] p-5">
-                    <p className="editorial-note">{slot.label}</p>
-                    <p className="mt-2 text-[0.92rem] leading-6 text-muted">{slot.description}</p>
-                    <div className="mt-4 overflow-hidden rounded-[1rem] border border-line bg-surface">
-                      {asset?.url ? <img src={asset.url} alt={asset.alt_text || slot.label} className="max-h-44 w-full object-contain p-4" /> : <div className="flex min-h-[10rem] items-center justify-center px-5 text-center text-[0.9rem] text-muted">Belum diatur.</div>}
-                    </div>
-                    <label className="button-secondary mt-4 cursor-pointer justify-center">
-                      <Upload className="h-4 w-4" />
-                      Ganti aset
-                      <input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" className="hidden" onChange={handleSiteAssetUpload(slot.key, slot.label, slot.section)} />
-                    </label>
-                  </article>
-                );
-              })}
-            </div>
-          ) : null}
-
-          {activeTab === "profil" ? (
-            <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-              <article className="admin-panel rounded-[1.5rem] p-5">
-                <p className="editorial-note">Foto profil</p>
-                <div className="mt-4 overflow-hidden rounded-[1.2rem] border border-line bg-surface">
-                  {siteAssetMap.founder_photo?.url ? <img src={siteAssetMap.founder_photo.url} alt="Foto profil" className="aspect-[4/5] w-full object-cover" /> : <div className="flex aspect-[4/5] items-center justify-center px-6 text-center text-[0.92rem] text-muted">Belum ada foto profil.</div>}
-                </div>
-                <label className="button-secondary mt-4 cursor-pointer justify-center">
-                  <Upload className="h-4 w-4" />
-                  Ganti foto profil
-                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFounderPhotoUpload} />
-                </label>
-              </article>
-              <form className="admin-panel rounded-[1.5rem] p-5" onSubmit={saveAboutProfile}>
-                <p className="editorial-note">Data profil</p>
-                <div className="mt-5 grid gap-4">
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Nama</span>
-                    <input className="input-shell" value={aboutProfile.name} onChange={(event) => setAboutProfile((profile) => ({ ...profile, name: event.target.value }))} />
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Peran</span>
-                    <input className="input-shell" value={aboutProfile.role} onChange={(event) => setAboutProfile((profile) => ({ ...profile, role: event.target.value }))} />
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Bio singkat</span>
-                    <textarea className="input-shell min-h-[100px] resize-none" value={aboutProfile.shortBio} onChange={(event) => setAboutProfile((profile) => ({ ...profile, shortBio: event.target.value }))} />
-                  </label>
-                  <label className="space-y-2 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                    <span>Bio detail</span>
-                    <textarea className="input-shell min-h-[140px] resize-none" value={aboutProfile.detailBio} onChange={(event) => setAboutProfile((profile) => ({ ...profile, detailBio: event.target.value }))} />
-                  </label>
-                </div>
-                <button type="submit" className="button-primary mt-5 w-full justify-center" disabled={isSaving}>
-                  <Save className="h-4 w-4" />
-                  Simpan profil
-                </button>
-              </form>
-            </div>
-          ) : null}
-
-          {activeTab === "kontak" ? (
-            <form className="admin-panel rounded-[1.6rem] p-5 sm:p-6" onSubmit={saveContactSettings}>
-              <div>
-                <p className="editorial-note">Kontak publik</p>
-                <h2 className="mt-2 text-[1.45rem] font-bold tracking-[-0.045em] text-text">Link yang tampil di website</h2>
-              </div>
-              <div className="mt-6 grid gap-4">
-                {contactLinks.map((link, index) => (
-                  <article key={`${link.type}-${index}`} className="grid gap-3 rounded-[1.2rem] border border-line bg-surface p-4 lg:grid-cols-[0.8fr_1fr_1fr_0.7fr_auto] lg:items-center">
-                    <input className="input-shell" value={link.label} onChange={updateContactLink(index, "label")} placeholder="Label" />
-                    <input className="input-shell" value={link.value} onChange={updateContactLink(index, "value")} placeholder="Teks tampil" />
-                    <input className="input-shell" value={link.href} onChange={updateContactLink(index, "href")} placeholder="URL" />
-                    <select className="input-shell" value={link.type} onChange={updateContactLink(index, "type")}>
-                      {["whatsapp", "email", "instagram", "linkedin", "other"].map((type) => <option key={type} value={type}>{type}</option>)}
-                    </select>
-                    <label className="flex items-center justify-between gap-3 rounded-[1rem] border border-line bg-card px-4 py-3 text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-text">
-                      Aktif
-                      <input type="checkbox" checked={link.isActive} onChange={updateContactLink(index, "isActive")} />
-                    </label>
-                  </article>
-                ))}
-              </div>
-              <button type="submit" className="button-primary mt-5 justify-center" disabled={isSaving}>
-                <Save className="h-4 w-4" />
-                Simpan kontak
-              </button>
-            </form>
-          ) : null}
-
-          {activeTab === "pengaturan" ? (
-            <div className="admin-panel rounded-[1.6rem] p-5 sm:p-6">
-              <p className="editorial-note">Pengaturan</p>
-              <h2 className="mt-2 text-[1.45rem] font-bold tracking-[-0.045em] text-text">Catatan operasional</h2>
-              <div className="mt-5 grid gap-3 text-[0.94rem] leading-7 text-muted">
-                <p className="rounded-[1rem] border border-line bg-surface p-4">Semua gambar baru disimpan di Supabase Storage bucket `site-media` dan metadata disimpan di database.</p>
-                <p className="rounded-[1rem] border border-line bg-surface p-4">Portofolio menggunakan `portfolio_items` untuk metadata dan `portfolio_images` untuk gambar utama serta galeri.</p>
-                <p className="rounded-[1rem] border border-line bg-surface p-4">Aset global seperti logo, favicon, OG image, dan foto profil diatur dari tab Identitas Website dan About / Profil.</p>
-              </div>
-            </div>
-          ) : null}
-              </div>
+              ) : null}
             </div>
           </main>
         </div>

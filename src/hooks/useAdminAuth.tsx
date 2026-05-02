@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
@@ -38,19 +38,46 @@ function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
   const [error, setError] = useState("");
+  const verifiedAdminUserIdRef = useRef<string | null>(null);
+  const authRequestIdRef = useRef(0);
+  const isAdminRef = useRef(false);
+
+  useEffect(() => {
+    isAdminRef.current = isAdmin;
+  }, [isAdmin]);
 
   const refreshAdminStatus = useCallback(async () => {
     if (!supabase) {
       setIsLoading(false);
       setIsAdmin(false);
+      verifiedAdminUserIdRef.current = null;
       return;
     }
 
+    setIsLoading(true);
     const { data } = await supabase.auth.getSession();
     const nextSession = data.session;
+    const nextUserId = nextSession?.user.id ?? null;
+
+    if (!nextUserId) {
+      verifiedAdminUserIdRef.current = null;
+      setSession(null);
+      setIsAdmin(false);
+      setIsLoading(false);
+      return;
+    }
+
+    if (verifiedAdminUserIdRef.current === nextUserId && isAdminRef.current) {
+      setSession(nextSession);
+      setIsLoading(false);
+      return;
+    }
+
+    const nextIsAdmin = await checkIsAdmin(nextUserId);
 
     setSession(nextSession);
-    setIsAdmin(nextSession?.user ? await checkIsAdmin(nextSession.user.id) : false);
+    setIsAdmin(nextIsAdmin);
+    verifiedAdminUserIdRef.current = nextIsAdmin ? nextUserId : null;
     setIsLoading(false);
   }, []);
 
@@ -74,32 +101,62 @@ function AdminAuthProvider({ children }: { children: ReactNode }) {
     }
 
     initializeSession();
-
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!isMounted) {
         return;
       }
 
-      setSession(nextSession);
-      setIsLoading(true);
-
-      if (!nextSession?.user) {
+      if (event === "SIGNED_OUT") {
+        authRequestIdRef.current += 1;
+        verifiedAdminUserIdRef.current = null;
+        setSession(null);
         setIsAdmin(false);
         setIsLoading(false);
         return;
       }
 
-      checkIsAdmin(nextSession.user.id)
+      if (!nextSession?.user) {
+        authRequestIdRef.current += 1;
+        verifiedAdminUserIdRef.current = null;
+        setSession(null);
+        setIsAdmin(false);
+        setIsLoading(false);
+        return;
+      }
+
+      if (verifiedAdminUserIdRef.current === nextSession.user.id && isAdminRef.current) {
+        setSession(nextSession);
+        setIsLoading(false);
+        return;
+      }
+
+      const authRequestId = authRequestIdRef.current + 1;
+
+      authRequestIdRef.current = authRequestId;
+      setSession(nextSession);
+      setIsAdmin(false);
+      setIsLoading(true);
+
+      void checkIsAdmin(nextSession.user.id)
         .then((nextIsAdmin) => {
-          if (isMounted) {
-            setIsAdmin(nextIsAdmin);
-            setIsLoading(false);
+          if (!isMounted || authRequestIdRef.current !== authRequestId) {
+            return;
           }
+
+          setIsAdmin(nextIsAdmin);
+          verifiedAdminUserIdRef.current = nextIsAdmin ? nextSession.user.id : null;
         })
         .catch((authError) => {
-          if (isMounted) {
-            setError(authError instanceof Error ? authError.message : "Admin access could not be verified.");
-            setIsAdmin(false);
+          if (!isMounted || authRequestIdRef.current !== authRequestId) {
+            return;
+          }
+
+          setError(authError instanceof Error ? authError.message : "Admin access could not be verified.");
+          setIsAdmin(false);
+          verifiedAdminUserIdRef.current = null;
+        })
+        .finally(() => {
+          if (isMounted && authRequestIdRef.current === authRequestId) {
             setIsLoading(false);
           }
         });
@@ -132,8 +189,10 @@ function AdminAuthProvider({ children }: { children: ReactNode }) {
       throw new Error("This account is not registered as an admin.");
     }
 
+    verifiedAdminUserIdRef.current = data.user?.id ?? null;
     setSession(data.session);
     setIsAdmin(true);
+    setIsLoading(false);
   }, []);
 
   const signOut = useCallback(async () => {
@@ -142,8 +201,11 @@ function AdminAuthProvider({ children }: { children: ReactNode }) {
     }
 
     await supabase.auth.signOut();
+    authRequestIdRef.current += 1;
+    verifiedAdminUserIdRef.current = null;
     setSession(null);
     setIsAdmin(false);
+    setIsLoading(false);
   }, []);
 
   const value = useMemo(

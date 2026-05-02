@@ -46,7 +46,15 @@ function LoadingLink({
     const destinationPath = destination.pathname;
     const destinationHash = destination.hash;
     const targetHref = href.startsWith("#") ? `${location.pathname}${href}` : href;
+    const isSamePageHash = Boolean(destinationHash && destinationPath === location.pathname);
     let endLoading: (() => void) | undefined;
+
+    if (isSamePageHash) {
+      navigate(targetHref);
+      await waitForNextPaint();
+      await waitForHashTarget(destinationHash);
+      return;
+    }
 
     flushSync(() => {
       endLoading = beginLoading();

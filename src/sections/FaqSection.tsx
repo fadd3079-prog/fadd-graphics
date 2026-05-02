@@ -7,7 +7,7 @@ function FaqSection() {
 
   return (
     <section className="section-shell section-space">
-      <div className="grid gap-10 xl:grid-cols-[0.72fr_1.28fr]">
+      <div className="grid gap-8 xl:grid-cols-[0.72fr_1.28fr]">
         <SectionHeading
           eyebrow={copy.faq.eyebrow}
           title={copy.faq.title}

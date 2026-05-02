@@ -4,7 +4,6 @@ import {
   DraftingCompass,
   FileText,
   Image,
-  Layers3,
   MessageSquare,
   Megaphone,
   Package,
@@ -63,15 +62,15 @@ function ServicesProcessSection() {
               return (
                 <article
                   key={service.title}
-                  className="section-frame flex h-full flex-col rounded-[1.7rem] p-6 hover:-translate-y-1 hover:border-lineStrong/80"
+                  className="section-frame flex h-full flex-col rounded-[1.45rem] p-5 hover:-translate-y-1 hover:border-lineStrong/80 sm:p-6"
                 >
                   <span className="flex h-11 w-11 items-center justify-center rounded-[0.95rem] border border-line/80 bg-surface text-accentStrong dark:text-accent">
                     <Icon className="h-5 w-5" />
                   </span>
-                  <h3 className="mt-5 max-w-[18ch] text-[1.18rem] font-bold tracking-[-0.04em] text-text">
+                  <h3 className="mt-5 max-w-[20ch] text-[1.14rem] font-bold tracking-[-0.02em] text-text">
                     {service.title}
                   </h3>
-                  <p className="mt-3 max-w-[36ch] text-[0.95rem] leading-7 text-muted">{service.description}</p>
+                  <p className="mt-3 max-w-[38ch] text-[0.94rem] leading-7 text-muted">{service.description}</p>
                 </article>
               );
             })}
@@ -93,14 +92,14 @@ function ServicesProcessSection() {
               const Icon = processIcons[step.key as keyof typeof processIcons];
 
               return (
-                <article key={step.title} className="section-frame flex h-full flex-col rounded-[1.65rem] p-6">
+                <article key={step.title} className="section-frame flex h-full flex-col rounded-[1.45rem] p-5 sm:p-6">
                   <span className="text-[0.8rem] font-semibold uppercase tracking-[0.055em] text-accent">
                     {`0${index + 1}`}
                   </span>
                   <div className="mt-4 flex h-11 w-11 items-center justify-center rounded-[0.95rem] border border-line/80 bg-surface text-accentStrong dark:text-accent">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="mt-5 max-w-[16ch] text-[1.08rem] font-bold tracking-[-0.04em] text-text">
+                  <h3 className="mt-5 max-w-[18ch] text-[1.06rem] font-bold tracking-[-0.02em] text-text">
                     {step.title}
                   </h3>
                   <p className="mt-3 max-w-[34ch] text-[0.94rem] leading-7 text-muted">{step.description}</p>
@@ -120,16 +119,16 @@ function ServicesProcessSection() {
             align="center"
           />
 
-          <div className="grid auto-rows-fr gap-4 lg:grid-cols-2 2xl:grid-cols-4">
+          <div className="grid auto-rows-fr gap-4 md:grid-cols-2 xl:grid-cols-4">
             {copy.reasons.items.map((reason) => {
               const Icon = reasonIcons[reason.key as keyof typeof reasonIcons];
 
               return (
-                <article key={reason.title} className="section-frame flex h-full flex-col rounded-[1.75rem] p-6">
+                <article key={reason.title} className="section-frame flex h-full flex-col rounded-[1.45rem] p-5 sm:p-6">
                   <span className="flex h-11 w-11 items-center justify-center rounded-[0.95rem] border border-line/80 bg-surface text-accentStrong dark:text-accent">
                     <Icon className="h-5 w-5" />
                   </span>
-                  <h3 className="mt-5 max-w-[18ch] text-[1.16rem] font-bold tracking-[-0.04em] text-text">
+                  <h3 className="mt-5 max-w-[20ch] text-[1.12rem] font-bold tracking-[-0.02em] text-text">
                     {reason.title}
                   </h3>
                   <p className="mt-3 max-w-[34ch] text-[0.95rem] leading-7 text-muted">{reason.description}</p>
