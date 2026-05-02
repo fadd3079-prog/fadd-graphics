@@ -3,16 +3,19 @@ import ContactForm from "../components/ContactForm";
 import SectionHeading from "../components/SectionHeading";
 import SocialIcon, { type SocialIconName } from "../components/SocialIcon";
 import { useLanguage } from "../hooks/useLanguage";
+import { useContactLinks } from "../hooks/useSiteData";
 
 const contactIcons = {
-  WhatsApp: "whatsapp",
-  Email: "email",
-  Instagram: "instagram",
-  LinkedIn: "linkedin",
+  whatsapp: "whatsapp",
+  email: "email",
+  instagram: "instagram",
+  linkedin: "linkedin",
+  other: "email",
 } satisfies Record<string, SocialIconName>;
 
 function ContactSection() {
-  const { copy } = useLanguage();
+  const { copy, language } = useLanguage();
+  const contactLinks = useContactLinks(language);
 
   return (
     <section id="contact" className="section-shell section-space pb-16 sm:pb-20">
@@ -25,8 +28,8 @@ function ContactSection() {
           />
 
           <div className="grid gap-4">
-            {copy.contact.links.map((contact) => {
-              const icon = contactIcons[contact.label as keyof typeof contactIcons] ?? "email";
+            {contactLinks.map((contact) => {
+              const icon = contactIcons[contact.type] ?? "email";
 
               return (
                 <a

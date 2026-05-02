@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type Sy
 import { ArrowLeft } from "lucide-react";
 import { Navigate, useParams } from "react-router-dom";
 import LoadingLink from "../components/LoadingLink";
+import PageLoadingGate from "../components/PageLoadingGate";
 import SectionHeading from "../components/SectionHeading";
 import {
   getPortfolioGallerySources,
@@ -212,10 +213,10 @@ function PortfolioDetailSkeleton() {
 
 function PortfolioDetailPage() {
   const { portfolioSlug } = useParams();
-  const { galleryItems, isLoading } = usePublishedPortfolioItems();
+  const { detailItems, isLoading } = usePublishedPortfolioItems();
   const { copy } = useLanguage();
   const detailCopy = copy.portfolio.detail;
-  const item = galleryItems.find((portfolioItem) => {
+  const item = detailItems.find((portfolioItem) => {
     const routeSlug = portfolioItem.detailPath?.split("/").filter(Boolean).pop();
 
     return portfolioItem.slug === portfolioSlug || routeSlug === portfolioSlug || portfolioItem.id === portfolioSlug;
@@ -239,11 +240,7 @@ function PortfolioDetailPage() {
   });
 
   if (isLoading) {
-    return (
-      <section className="section-shell flex min-h-[60vh] items-center justify-center pt-28">
-        <span className="h-5 w-5 animate-spin rounded-full border-2 border-lineStrong border-t-accent" />
-      </section>
-    );
+    return <PageLoadingGate />;
   }
 
   if (!item || !hasDetailGallery) {

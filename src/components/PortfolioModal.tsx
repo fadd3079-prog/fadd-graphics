@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ArrowUpRight, X } from "lucide-react";
-import { getPortfolioImageSource, portfolioImageMap, type PortfolioDisplayItem } from "../data/portfolio";
+import LoadingLink from "./LoadingLink";
+import { getPortfolioGallerySources, getPortfolioImageSource, type PortfolioDisplayItem } from "../data/portfolio";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { useLanguage } from "../hooks/useLanguage";
 
@@ -42,18 +43,10 @@ function PortfolioModal({ item, onClose }: PortfolioModalProps) {
   }
 
   const imageSource = getPortfolioImageSource(item);
-  const galleryImageNames = item.galleryImageNames?.length ? item.galleryImageNames : [item.imageName];
-  const localGalleryImages = galleryImageNames
-    .map((imageName) => ({
-      imageName,
-      source: portfolioImageMap[imageName],
-    }))
-    .filter((image): image is { imageName: string; source: string } => Boolean(image.source));
-  const remoteGalleryImages = item.galleryImageUrls?.map((source, index) => ({
+  const galleryImages = [imageSource, ...getPortfolioGallerySources(item)].filter(Boolean).map((source, index) => ({
     imageName: `${item.id}-${index}`,
     source,
-  })) ?? [];
-  const galleryImages = remoteGalleryImages.length ? remoteGalleryImages : localGalleryImages;
+  }));
 
   return (
     <div
@@ -68,11 +61,17 @@ function PortfolioModal({ item, onClose }: PortfolioModalProps) {
         onClick={(event) => event.stopPropagation()}
       >
         <div className="border-b border-line/80 bg-card p-3">
-          <img
-            src={imageSource}
-            alt={item.title}
-            className="max-h-[19rem] w-full object-contain"
-          />
+          {imageSource ? (
+            <img
+              src={imageSource}
+              alt={item.title}
+              className="max-h-[19rem] w-full object-contain"
+            />
+          ) : (
+            <div className="flex min-h-[12rem] items-center justify-center rounded-[1rem] border border-line bg-surface px-6 text-center">
+              <p className="text-[0.9rem] leading-6 text-muted">Gambar belum tersedia.</p>
+            </div>
+          )}
           {galleryImages.length > 1 ? (
             <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
               {galleryImages.map((image, index) => (
@@ -146,14 +145,14 @@ function PortfolioModal({ item, onClose }: PortfolioModalProps) {
             </div>
           ) : null}
 
-          <a
+          <LoadingLink
             href="/#contact"
             onClick={onClose}
             className="mt-auto inline-flex items-center gap-2 text-sm font-semibold text-text hover:text-accent"
           >
             {modalCopy.discuss}
             <ArrowUpRight className="h-4 w-4" />
-          </a>
+          </LoadingLink>
         </div>
       </div>
     </div>

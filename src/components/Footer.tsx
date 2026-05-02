@@ -3,35 +3,21 @@ import { useLocation } from "react-router-dom";
 import LoadingLink from "./LoadingLink";
 import SocialIcon, { type SocialIconName } from "./SocialIcon";
 import { useLanguage } from "../hooks/useLanguage";
-import logoMarkLight from "../assets/branding/fadd-mark-teal.png";
-import logoMarkDark from "../assets/branding/fadd-mark-white-compact.png";
+import { useContactLinks, useResolvedSiteAssets } from "../hooks/useSiteData";
 
-const socialLinks = [
-  {
-    label: "WhatsApp",
-    href: "https://wa.me/6283150964050",
-    icon: "whatsapp",
-  },
-  {
-    label: "Instagram",
-    href: "https://instagram.com/fadd_graphics",
-    icon: "instagram",
-  },
-  {
-    label: "LinkedIn",
-    href: "https://www.linkedin.com/in/mufaddhol-01b60333a/",
-    icon: "linkedin",
-  },
-  {
-    label: "Email",
-    href: "mailto:faddgraphics@gmail.com",
-    icon: "email",
-  },
-] satisfies { label: string; href: string; icon: SocialIconName }[];
+const socialIconMap = {
+  whatsapp: "whatsapp",
+  instagram: "instagram",
+  linkedin: "linkedin",
+  email: "email",
+  other: "email",
+} satisfies Record<string, SocialIconName>;
 
 function Footer() {
   const location = useLocation();
-  const { copy } = useLanguage();
+  const { copy, language } = useLanguage();
+  const siteAssets = useResolvedSiteAssets();
+  const socialLinks = useContactLinks(language);
   const contactHref = location.pathname === "/" ? "#contact" : "/#contact";
   const servicesHref = location.pathname === "/" ? "#services" : "/#services";
 
@@ -41,8 +27,16 @@ function Footer() {
         <div className="max-w-xl">
           <div className="flex items-center gap-3">
             <span className="flex h-12 w-12 items-center justify-center rounded-[1rem] border border-line/80 bg-card">
-              <img src={logoMarkLight} alt="FADD GRAPHICS" className="h-7 w-7 dark:hidden" />
-              <img src={logoMarkDark} alt="FADD GRAPHICS" className="hidden h-7 w-7 dark:block" />
+              {siteAssets.footerLogoLight?.url ? (
+                <img src={siteAssets.footerLogoLight.url} alt={siteAssets.footerLogoLight.alt_text || "FADD GRAPHICS"} className="h-7 w-7 object-contain dark:hidden" />
+              ) : (
+                <span className="text-[0.7rem] font-extrabold tracking-[-0.06em] text-text dark:hidden">FG</span>
+              )}
+              {siteAssets.footerLogoDark?.url ? (
+                <img src={siteAssets.footerLogoDark.url} alt={siteAssets.footerLogoDark.alt_text || "FADD GRAPHICS"} className="hidden h-7 w-7 object-contain dark:block" />
+              ) : (
+                <span className="hidden text-[0.7rem] font-extrabold tracking-[-0.06em] text-text dark:block">FG</span>
+              )}
             </span>
             <div>
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.055em] text-muted">
@@ -68,10 +62,10 @@ function Footer() {
               {copy.footer.portfolio}
               <ArrowUpRight className="h-4 w-4" />
             </LoadingLink>
-            <a href={servicesHref} className="inline-flex items-center gap-2 text-text hover:text-accent">
+            <LoadingLink href={servicesHref} className="inline-flex items-center gap-2 text-text hover:text-accent">
               {copy.footer.services}
               <ArrowUpRight className="h-4 w-4" />
-            </a>
+            </LoadingLink>
             <LoadingLink href={contactHref} className="inline-flex items-center gap-2 text-text hover:text-accent" loadingDuration={280}>
               {copy.footer.brief}
               <ArrowUpRight className="h-4 w-4" />
@@ -84,7 +78,7 @@ function Footer() {
             {copy.footer.connect}
           </p>
           <div className="mt-4 flex items-center gap-3">
-            {socialLinks.map(({ href, label, icon }) => (
+            {socialLinks.map(({ href, label, type }) => (
               <a
                 key={label}
                 href={href}
@@ -93,7 +87,7 @@ function Footer() {
                 aria-label={label}
                 className="icon-frame rounded-full bg-card hover:border-accent/55 hover:bg-accentSoft hover:text-accentStrong"
               >
-                <SocialIcon name={icon} className="h-5 w-5" />
+                <SocialIcon name={socialIconMap[type] ?? "email"} className="h-5 w-5" />
               </a>
             ))}
           </div>

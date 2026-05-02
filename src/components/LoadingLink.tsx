@@ -1,6 +1,9 @@
 import { type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUiLoading } from "./UiLoadingProvider";
+import { jumpToTop, waitForHashTarget, waitForNextPaint } from "../lib/navigation-scroll";
+import { preparePublicRoute } from "../lib/route-preload";
 
 type LoadingLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
   children: ReactNode;
@@ -17,7 +20,7 @@ function LoadingLink({
 }: LoadingLinkProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { showLoading } = useUiLoading();
+  const { beginLoading } = useUiLoading();
 
   const handleClick = async (event: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
@@ -39,20 +42,38 @@ function LoadingLink({
     }
 
     event.preventDefault();
-    const shouldContinue = await showLoading(loadingDuration);
+    const destination = new URL(href, window.location.href);
+    const destinationPath = destination.pathname;
+    const destinationHash = destination.hash;
+    const targetHref = href.startsWith("#") ? `${location.pathname}${href}` : href;
+    let endLoading: (() => void) | undefined;
 
-    if (!shouldContinue) {
+    flushSync(() => {
+      endLoading = beginLoading();
+    });
+
+    try {
+      await Promise.all([
+        preparePublicRoute(href),
+        new Promise((resolve) => window.setTimeout(resolve, loadingDuration)),
+      ]);
+    } catch {
+      endLoading?.();
       return;
     }
 
-    if (href.startsWith("/")) {
-      navigate(href);
-      return;
-    }
+    if (href.startsWith("/") || href.startsWith("#")) {
+      navigate(targetHref);
+      await waitForNextPaint();
 
-    if (href.startsWith("#")) {
-      window.history.replaceState(null, "", `${location.pathname}${href}`);
-      document.getElementById(href.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (destinationHash) {
+        await waitForHashTarget(destinationHash);
+      } else if (destinationPath !== location.pathname || href === "/" || href === location.pathname) {
+        jumpToTop();
+      }
+
+      window.setTimeout(() => endLoading?.(), 120);
+      return;
     }
   };
 

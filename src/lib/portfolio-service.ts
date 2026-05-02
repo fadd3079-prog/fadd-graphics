@@ -1,5 +1,12 @@
 import type { PortfolioDisplayItem, PortfolioLayout } from "../data/portfolio";
-import { supabase, type PortfolioInsert, type PortfolioRow } from "./supabase";
+import { fetchPortfolioImages, uploadMediaAssets } from "./media-service";
+import {
+  supabase,
+  type MediaAssetRow,
+  type PortfolioImageRow,
+  type PortfolioInsert,
+  type PortfolioRow,
+} from "./supabase";
 
 export type PortfolioFormState = {
   id?: string;
@@ -20,8 +27,12 @@ export type PortfolioFormState = {
   isPublished: boolean;
   imageUrl: string;
   imagePath: string;
+  imageRecordId: string;
+  imageMediaId: string;
   galleryUrls: string[];
   galleryPaths: string[];
+  galleryImageIds: string[];
+  galleryMediaIds: string[];
 };
 
 export const defaultPortfolioFormState: PortfolioFormState = {
@@ -42,8 +53,12 @@ export const defaultPortfolioFormState: PortfolioFormState = {
   isPublished: false,
   imageUrl: "",
   imagePath: "",
+  imageRecordId: "",
+  imageMediaId: "",
   galleryUrls: [],
   galleryPaths: [],
+  galleryImageIds: [],
+  galleryMediaIds: [],
 };
 
 export function createDefaultPortfolioFormState(): PortfolioFormState {
@@ -51,6 +66,8 @@ export function createDefaultPortfolioFormState(): PortfolioFormState {
     ...defaultPortfolioFormState,
     galleryUrls: [],
     galleryPaths: [],
+    galleryImageIds: [],
+    galleryMediaIds: [],
   };
 }
 
@@ -77,12 +94,32 @@ function normalizeTags(value: string) {
     .filter(Boolean);
 }
 
+function getRowImages(row: PortfolioRow) {
+  const images = row.portfolio_images?.filter((image) => image.is_active) ?? [];
+  const mainImage = images.find((image) => image.image_role === "main");
+  const galleryImages = images
+    .filter((image) => image.image_role === "gallery")
+    .sort((first, second) => first.sort_order - second.sort_order);
+
+  return {
+    mainImage,
+    galleryImages,
+  };
+}
+
 function mapRowToDisplayItem(row: PortfolioRow): PortfolioDisplayItem {
+  const { mainImage, galleryImages } = getRowImages(row);
+  const imageUrl = mainImage?.image_url ?? row.image_url ?? "";
+  const imagePath = mainImage?.image_path ?? row.image_path ?? imageUrl;
+  const galleryImageUrls = galleryImages.length
+    ? galleryImages.map((image) => image.image_url)
+    : row.gallery_urls;
+
   return {
     id: row.id,
     slug: row.slug,
-    imageName: row.image_path ?? row.image_url ?? "",
-    imageUrl: row.image_url ?? undefined,
+    imageName: imagePath,
+    imageUrl: imageUrl || undefined,
     title: row.title,
     category: row.category as PortfolioDisplayItem["category"],
     summary: row.summary ?? undefined,
@@ -91,15 +128,24 @@ function mapRowToDisplayItem(row: PortfolioRow): PortfolioDisplayItem {
     tone: row.tone ?? undefined,
     tags: row.tags,
     layout: row.layout,
-    galleryImageUrls: row.gallery_urls,
+    galleryImageUrls,
     ctaLabel: row.cta_label ?? undefined,
     detailPath: row.detail_path ?? undefined,
     isFeatured: row.is_featured,
     isHome: row.is_home,
+    isPublished: row.is_published,
   };
 }
 
 export function rowToFormState(row: PortfolioRow): PortfolioFormState {
+  const { mainImage, galleryImages } = getRowImages(row);
+  const galleryUrls = galleryImages.length
+    ? galleryImages.map((image) => image.image_url)
+    : [...row.gallery_urls];
+  const galleryPaths = galleryImages.length
+    ? galleryImages.map((image) => image.image_path)
+    : [...row.gallery_paths];
+
   return {
     id: row.id,
     title: row.title,
@@ -117,10 +163,14 @@ export function rowToFormState(row: PortfolioRow): PortfolioFormState {
     isFeatured: row.is_featured,
     isHome: row.is_home,
     isPublished: row.is_published,
-    imageUrl: row.image_url ?? "",
-    imagePath: row.image_path ?? "",
-    galleryUrls: [...row.gallery_urls],
-    galleryPaths: [...row.gallery_paths],
+    imageUrl: mainImage?.image_url ?? row.image_url ?? "",
+    imagePath: mainImage?.image_path ?? row.image_path ?? "",
+    imageRecordId: mainImage?.id ?? "",
+    imageMediaId: mainImage?.media_asset_id ?? "",
+    galleryUrls,
+    galleryPaths,
+    galleryImageIds: galleryImages.map((image) => image.id),
+    galleryMediaIds: galleryImages.map((image) => image.media_asset_id ?? ""),
   };
 }
 
@@ -146,6 +196,103 @@ function formStateToPayload(values: PortfolioFormState): PortfolioInsert {
     is_published: values.isPublished,
     sort_order: Number.parseInt(values.sortOrder, 10) || 0,
   };
+}
+
+function mediaToPortfolioUpload(media: MediaAssetRow) {
+  return {
+    path: media.path,
+    url: media.url,
+    mediaId: media.id,
+  };
+}
+
+async function upsertMainPortfolioImage(itemId: string, values: PortfolioFormState) {
+  const client = requireSupabase();
+  const existingMainId = values.imageRecordId;
+
+  if (!values.imageUrl) {
+    if (existingMainId) {
+      await client.from("portfolio_images").delete().eq("id", existingMainId);
+    }
+
+    return;
+  }
+
+  const payload = {
+    portfolio_item_id: itemId,
+    media_asset_id: values.imageMediaId || null,
+    image_role: "main",
+    image_url: values.imageUrl,
+    image_path: values.imagePath || "",
+    alt_text: values.title,
+    sort_order: 0,
+    is_active: true,
+  };
+
+  if (existingMainId) {
+    const { error } = await client.from("portfolio_images").update(payload).eq("id", existingMainId);
+
+    if (error) {
+      throw error;
+    }
+
+    return;
+  }
+
+  const { error } = await client.from("portfolio_images").insert(payload);
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function syncGalleryPortfolioImages(itemId: string, values: PortfolioFormState) {
+  const client = requireSupabase();
+  const currentImages = await fetchPortfolioImages([itemId]);
+  const currentGalleryImages = currentImages.filter((image) => image.image_role === "gallery");
+  const nextIds = new Set(values.galleryImageIds.filter(Boolean));
+
+  const deletedImages = currentGalleryImages.filter((image) => !nextIds.has(image.id));
+
+  if (deletedImages.length) {
+    const { error } = await client
+      .from("portfolio_images")
+      .delete()
+      .in("id", deletedImages.map((image) => image.id));
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  const updates = values.galleryUrls.map((url, index) => {
+    const imageId = values.galleryImageIds[index];
+    const payload = {
+      portfolio_item_id: itemId,
+      media_asset_id: values.galleryMediaIds[index] || null,
+      image_role: "gallery",
+      image_url: url,
+      image_path: values.galleryPaths[index] || "",
+      alt_text: `${values.title} ${index + 1}`,
+      sort_order: index + 1,
+      is_active: true,
+    };
+
+    return imageId
+      ? client.from("portfolio_images").update(payload).eq("id", imageId)
+      : client.from("portfolio_images").insert(payload);
+  });
+  const results = await Promise.all(updates);
+  const firstError = results.find((result) => result.error)?.error;
+
+  if (firstError) {
+    throw firstError;
+  }
+}
+
+async function syncPortfolioImages(itemId: string, values: PortfolioFormState) {
+  await upsertMainPortfolioImage(itemId, values);
+  await syncGalleryPortfolioImages(itemId, values);
 }
 
 function getReadablePortfolioError(error: unknown) {
@@ -180,23 +327,73 @@ async function ensureSlugIsAvailable(slug: string, currentItemId?: string) {
   }
 }
 
+function attachPortfolioImages(rows: PortfolioRow[], images: PortfolioImageRow[]) {
+  const imagesByItemId = images.reduce<Record<string, PortfolioImageRow[]>>((groups, image) => {
+    groups[image.portfolio_item_id] = groups[image.portfolio_item_id] ?? [];
+    groups[image.portfolio_item_id].push(image);
+
+    return groups;
+  }, {});
+
+  return rows.map((row) => ({
+    ...row,
+    portfolio_images: imagesByItemId[row.id] ?? [],
+  }));
+}
+
 export async function fetchPublishedPortfolioItems() {
   if (!supabase) {
-    return [];
+    return {
+      galleryItems: [],
+      featuredItems: [],
+      homeItems: [],
+      detailItems: [],
+      curatedItems: [],
+    };
   }
 
-  const { data, error } = await supabase
-    .from("portfolio_items")
-    .select("*")
-    .eq("is_published", true)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: false });
+  const client = supabase;
+  const selectColumns = "id,title,slug,category,summary,deliverable,focus,tone,tags,layout,image_url,image_path,gallery_urls,cta_label,detail_path,is_featured,is_home,is_published,sort_order,created_at";
+  const createVisibilityQuery = (column: "is_home" | "is_featured" | "is_published") =>
+    client
+      .from("portfolio_items")
+      .select(selectColumns)
+      .eq(column, true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    throw error;
+  const [homeResult, featuredResult, publishedResult] = await Promise.all([
+    createVisibilityQuery("is_home"),
+    createVisibilityQuery("is_featured"),
+    createVisibilityQuery("is_published"),
+  ]);
+  const firstError = homeResult.error ?? featuredResult.error ?? publishedResult.error;
+
+  if (firstError) {
+    throw firstError;
   }
 
-  return (data as PortfolioRow[]).map(mapRowToDisplayItem);
+  const rawHomeRows = homeResult.data as PortfolioRow[];
+  const rawFeaturedRows = featuredResult.data as PortfolioRow[];
+  const rawPublishedRows = publishedResult.data as PortfolioRow[];
+  const itemIds = [...rawHomeRows, ...rawFeaturedRows, ...rawPublishedRows]
+    .map((row) => row.id)
+    .filter((id, index, ids) => ids.indexOf(id) === index);
+  const images = await fetchPortfolioImages(itemIds);
+  const homeItems = attachPortfolioImages(rawHomeRows, images).map(mapRowToDisplayItem);
+  const featuredItems = attachPortfolioImages(rawFeaturedRows, images).map(mapRowToDisplayItem);
+  const galleryItems = attachPortfolioImages(rawPublishedRows, images).map(mapRowToDisplayItem);
+  const detailItems = [...homeItems, ...featuredItems, ...galleryItems].filter(
+    (item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index,
+  );
+
+  return {
+    galleryItems,
+    featuredItems,
+    homeItems,
+    detailItems,
+    curatedItems: detailItems,
+  };
 }
 
 export async function fetchAdminPortfolioItems() {
@@ -211,7 +408,10 @@ export async function fetchAdminPortfolioItems() {
     throw error;
   }
 
-  return data as PortfolioRow[];
+  const rows = data as PortfolioRow[];
+  const images = await fetchPortfolioImages(rows.map((row) => row.id));
+
+  return attachPortfolioImages(rows, images);
 }
 
 export async function createPortfolioItem(values: PortfolioFormState) {
@@ -234,7 +434,11 @@ export async function createPortfolioItem(values: PortfolioFormState) {
     throw getReadablePortfolioError(error);
   }
 
-  return data as PortfolioRow;
+  const createdRow = data as PortfolioRow;
+
+  await syncPortfolioImages(createdRow.id, values);
+
+  return createdRow;
 }
 
 export async function updatePortfolioItem(itemId: string, values: PortfolioFormState) {
@@ -258,20 +462,17 @@ export async function updatePortfolioItem(itemId: string, values: PortfolioFormS
     throw getReadablePortfolioError(error);
   }
 
+  await syncPortfolioImages(itemId, values);
+
   return data as PortfolioRow;
 }
 
 export async function deletePortfolioItem(row: PortfolioRow) {
   const client = requireSupabase();
-  const paths = [row.image_path, ...row.gallery_paths].filter((path): path is string => Boolean(path));
   const { error } = await client.from("portfolio_items").delete().eq("id", row.id);
 
   if (error) {
     throw error;
-  }
-
-  if (paths.length) {
-    await client.storage.from("portfolio").remove(paths);
   }
 }
 
@@ -283,7 +484,7 @@ export async function removePortfolioStorageFiles(paths: string[]) {
     return;
   }
 
-  const { error } = await client.storage.from("portfolio").remove(normalizedPaths);
+  const { error } = await client.storage.from("site-media").remove(normalizedPaths);
 
   if (error) {
     throw error;
@@ -307,29 +508,12 @@ export async function updatePortfolioOrder(rows: PortfolioRow[]) {
 }
 
 export async function uploadPortfolioImages(files: FileList | File[]) {
-  const client = requireSupabase();
-  const uploadedFiles = await Promise.all(
-    Array.from(files).map(async (file) => {
-      const extension = file.name.split(".").pop() || "webp";
-      const filename = `${crypto.randomUUID()}.${extension}`;
-      const path = `portfolio/${filename}`;
-      const { error } = await client.storage.from("portfolio").upload(path, file, {
-        cacheControl: "31536000",
-        upsert: false,
-      });
+  const uploadedMedia = await uploadMediaAssets(files, {
+    section: "portfolio",
+    usageType: "portfolio-image",
+    label: "Portfolio image",
+    altText: "Portfolio image",
+  });
 
-      if (error) {
-        throw error;
-      }
-
-      const { data } = client.storage.from("portfolio").getPublicUrl(path);
-
-      return {
-        path,
-        url: data.publicUrl,
-      };
-    }),
-  );
-
-  return uploadedFiles;
+  return uploadedMedia.map(mediaToPortfolioUpload);
 }

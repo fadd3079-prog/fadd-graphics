@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 import { preloadImages } from "../lib/image-preload";
 import { useUiLoading } from "../components/UiLoadingProvider";
 
@@ -20,7 +20,7 @@ export function useCriticalImages(
   const imageKey = useMemo(() => [...new Set(sources.filter(Boolean))].join("|"), [sources]);
   const [isReady, setIsReady] = useState(!enabled || !imageKey);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!enabled || !imageKey) {
       setIsReady(true);
       return undefined;

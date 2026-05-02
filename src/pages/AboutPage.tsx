@@ -2,12 +2,13 @@ import { ArrowLeft, BadgeCheck, BookOpen, BriefcaseBusiness, Layers3, Quote, Ref
 import LoadingLink from "../components/LoadingLink";
 import SectionHeading from "../components/SectionHeading";
 import { useLanguage } from "../hooks/useLanguage";
-import founderPortrait from "../assets/portrait/mufaddhol-portrait.webp";
+import { useResolvedSiteAssets } from "../hooks/useSiteData";
 
 const trustIcons = [Layers3, RefreshCcw, Quote];
 
 function AboutPage() {
   const { copy } = useLanguage();
+  const siteAssets = useResolvedSiteAssets();
   const about = copy.about;
 
   return (
@@ -27,11 +28,18 @@ function AboutPage() {
 
         <div className="section-frame grid gap-5 rounded-[2rem] p-5 sm:grid-cols-[0.86fr_1.14fr] sm:p-6">
           <div className="overflow-hidden rounded-[1.45rem] border border-line/80 bg-surface">
-            <img
-              src={founderPortrait}
-              alt={about.portraitAlt}
-              className="aspect-[4/5] w-full object-cover"
-            />
+            {siteAssets.founderPhoto?.url ? (
+              <img
+                src={siteAssets.founderPhoto.url}
+                alt={siteAssets.founderPhoto.alt_text || about.portraitAlt}
+                className="aspect-[4/5] w-full object-cover"
+                decoding="async"
+              />
+            ) : (
+              <div className="flex aspect-[4/5] w-full items-center justify-center bg-card px-8 text-center">
+                <p className="text-[0.95rem] leading-7 text-muted">Foto profil dapat diatur dari dashboard admin.</p>
+              </div>
+            )}
           </div>
           <div className="flex flex-col justify-center">
             <p className="editorial-note">FADD GRAPHICS</p>

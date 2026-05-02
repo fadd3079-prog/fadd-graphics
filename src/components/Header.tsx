@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import LoadingLink from "./LoadingLink";
 import ThemeToggle from "./ThemeToggle";
 import type { ThemeMode } from "../hooks/useTheme";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { useLanguage } from "../hooks/useLanguage";
+import { useResolvedSiteAssets } from "../hooks/useSiteData";
 import type { Language } from "../data/site-content";
-import logoMarkLight from "../assets/branding/fadd-mark-teal.png";
-import logoMarkDark from "../assets/branding/fadd-mark-white-compact.png";
 
 type HeaderProps = {
   theme: ThemeMode;
@@ -19,6 +18,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { copy, language, languageLabels, setLanguage } = useLanguage();
+  const siteAssets = useResolvedSiteAssets();
   const location = useLocation();
   const isHomePage = location.pathname === "/";
   const languages: Language[] = ["id", "en"];
@@ -44,10 +44,18 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
         className={`mx-auto max-w-[1280px] rounded-[1.45rem] border transition-all duration-500 ease-premium ${shellClassName}`}
       >
         <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link to="/" className="flex items-center gap-3">
+          <LoadingLink href="/" className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-[1rem] border border-line/80 bg-card">
-              <img src={logoMarkLight} alt="FADD GRAPHICS" className="h-7 w-7 dark:hidden" />
-              <img src={logoMarkDark} alt="FADD GRAPHICS" className="hidden h-7 w-7 dark:block" />
+              {siteAssets.headerLogoLight?.url ? (
+                <img src={siteAssets.headerLogoLight.url} alt={siteAssets.headerLogoLight.alt_text || "FADD GRAPHICS"} className="h-7 w-7 object-contain dark:hidden" />
+              ) : (
+                <span className="text-[0.7rem] font-extrabold tracking-[-0.06em] text-text dark:hidden">FG</span>
+              )}
+              {siteAssets.headerLogoDark?.url ? (
+                <img src={siteAssets.headerLogoDark.url} alt={siteAssets.headerLogoDark.alt_text || "FADD GRAPHICS"} className="hidden h-7 w-7 object-contain dark:block" />
+              ) : (
+                <span className="hidden text-[0.7rem] font-extrabold tracking-[-0.06em] text-text dark:block">FG</span>
+              )}
             </span>
             <span className="hidden sm:block">
               <span className="block text-[0.68rem] font-semibold uppercase tracking-[0.055em] text-muted">
@@ -57,7 +65,7 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
                 FADD GRAPHICS
               </span>
             </span>
-          </Link>
+          </LoadingLink>
 
           <nav className="hidden items-center gap-1.5 lg:flex">
             {copy.navItems.map((item) => (
@@ -72,13 +80,13 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
                   {item.label}
                 </LoadingLink>
               ) : (
-                <a
+                <LoadingLink
                   key={item.label}
                   href={isHomePage ? `#${item.target}` : `/#${item.target}`}
                   className="rounded-full px-3.5 py-2 text-[0.78rem] font-semibold uppercase tracking-[0.045em] text-muted hover:bg-card hover:text-text"
                 >
                   {item.label}
-                </a>
+                </LoadingLink>
               )
             ))}
           </nav>
@@ -103,10 +111,10 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
             </div>
             <ThemeToggle theme={theme} onToggle={onToggleTheme} />
 
-            <a href={isHomePage ? "#contact" : "/#contact"} className="button-primary hidden sm:inline-flex">
+            <LoadingLink href={isHomePage ? "#contact" : "/#contact"} className="button-primary hidden sm:inline-flex">
               {copy.header.cta}
               <ArrowUpRight className="h-4 w-4" />
-            </a>
+            </LoadingLink>
 
             <button
               type="button"
@@ -147,20 +155,20 @@ function Header({ theme, onToggleTheme }: HeaderProps) {
                     {item.label}
                   </LoadingLink>
                 ) : (
-                  <a
+                  <LoadingLink
                     key={item.label}
                     href={isHomePage ? `#${item.target}` : `/#${item.target}`}
                     className="rounded-[1.1rem] border border-line/60 bg-card px-4 py-3 text-[0.82rem] font-semibold uppercase tracking-[0.045em] text-text hover:border-lineStrong/80"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {item.label}
-                  </a>
+                  </LoadingLink>
                 )
               ))}
-              <a href={isHomePage ? "#contact" : "/#contact"} className="button-primary mt-2 justify-center" onClick={() => setIsMenuOpen(false)}>
+              <LoadingLink href={isHomePage ? "#contact" : "/#contact"} className="button-primary mt-2 justify-center" onClick={() => setIsMenuOpen(false)}>
                 {copy.header.cta}
                 <ArrowUpRight className="h-4 w-4" />
-              </a>
+              </LoadingLink>
             </nav>
           </div>
         ) : null}

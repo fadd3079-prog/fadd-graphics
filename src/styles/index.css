@@ -46,6 +46,10 @@
     scrollbar-gutter: stable;
   }
 
+  #root {
+    @apply min-h-screen bg-bg text-text;
+  }
+
   body {
     @apply min-h-screen bg-bg font-sans text-[15px] text-text antialiased sm:text-[15.5px];
     font-feature-settings: "cv11" 1, "ss01" 1, "ss03" 1;
@@ -171,6 +175,25 @@
 
   .editorial-note {
     @apply text-[0.76rem] font-semibold uppercase tracking-[0.055em] text-muted;
+  }
+
+  .admin-kicker {
+    @apply text-[0.72rem] font-semibold uppercase tracking-[0.045em] text-muted;
+  }
+
+  .admin-panel {
+    @apply border border-line bg-card shadow-soft;
+  }
+
+  .admin-auth-shell {
+    @apply relative flex min-h-screen items-center justify-center bg-bg px-5 py-20;
+    background-image:
+      radial-gradient(circle at 16% 10%, rgb(var(--color-accent-soft) / 0.55), transparent 34%),
+      radial-gradient(circle at 84% 8%, rgb(var(--color-accent-cool-soft) / 0.6), transparent 32%);
+  }
+
+  .admin-auth-card {
+    @apply w-full max-w-[29rem] rounded-[1.75rem] border border-line bg-card p-6 shadow-lift sm:p-8;
   }
 
   @media (min-width: 640px) {

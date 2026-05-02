@@ -2,10 +2,11 @@ import { ArrowUpRight, BadgeCheck } from "lucide-react";
 import LoadingLink from "../components/LoadingLink";
 import SectionHeading from "../components/SectionHeading";
 import { useLanguage } from "../hooks/useLanguage";
-import founderPortrait from "../assets/portrait/mufaddhol-portrait.webp";
+import { useResolvedSiteAssets } from "../hooks/useSiteData";
 
 function AboutSection() {
   const { copy } = useLanguage();
+  const siteAssets = useResolvedSiteAssets();
   const about = copy.about;
   const featuredExperience = about.experiences.slice(0, 2);
   const featuredHighlights = about.highlights.slice(0, 3);
@@ -16,11 +17,19 @@ function AboutSection() {
         <div className="grid gap-0 xl:grid-cols-[0.82fr_1.18fr]">
           <div className="p-4 sm:p-5">
             <div className="relative overflow-hidden rounded-[1.55rem] border border-line/80 bg-surface">
-              <img
-                src={founderPortrait}
-                alt={about.portraitAlt}
-                className="aspect-[4/5] w-full object-cover xl:aspect-square"
-              />
+              {siteAssets.founderPhoto?.url ? (
+                <img
+                  src={siteAssets.founderPhoto.url}
+                  alt={siteAssets.founderPhoto.alt_text || about.portraitAlt}
+                  className="aspect-[4/5] w-full object-cover xl:aspect-square"
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <div className="flex aspect-[4/5] w-full items-center justify-center bg-card px-8 text-center xl:aspect-square">
+                  <p className="text-[0.95rem] leading-7 text-muted">Foto profil dapat ditambahkan dari dashboard admin.</p>
+                </div>
+              )}
               <div className="absolute inset-x-4 bottom-4 rounded-[1.1rem] border border-white/15 bg-black/62 px-4 py-3 text-white shadow-edge backdrop-blur-sm">
                 <p className="text-[0.75rem] font-semibold uppercase tracking-[0.055em] text-white/68">
                   FADD GRAPHICS

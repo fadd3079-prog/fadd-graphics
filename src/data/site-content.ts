@@ -523,7 +523,7 @@ export const siteCopy = {
       eyebrow: "Maintenance notice",
       title: "Website ini masih dalam tahap penyempurnaan.",
       description:
-        "Portfolio sedang ditinjau dan diperbarui bertahap. Beberapa detail karya bisa berubah selama proses review.",
+        "Konten sedang ditinjau dan diperbarui bertahap. Beberapa detail karya bisa berubah selama proses review.",
       cta: "Lanjutkan ke website",
     },
   },
@@ -1021,7 +1021,7 @@ export const siteCopy = {
       eyebrow: "Maintenance notice",
       title: "This website is still being refined.",
       description:
-        "The portfolio is being reviewed and updated gradually. Some project details may change during the review process.",
+        "The content is being reviewed and updated gradually. Some project details may change during the review process.",
       cta: "Continue to website",
     },
   },

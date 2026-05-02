@@ -5,13 +5,14 @@ import { getPortfolioImageSource } from "../data/portfolio";
 import { useCriticalImages } from "../hooks/useCriticalImages";
 import { usePublishedPortfolioItems } from "../hooks/usePublishedPortfolioItems";
 import { useLanguage } from "../hooks/useLanguage";
-import logoMark from "../assets/branding/fadd-mark-teal.png";
+import { useResolvedSiteAssets } from "../hooks/useSiteData";
 
 function HeroSection() {
-  const { curatedItems } = usePublishedPortfolioItems();
+  const { homeItems } = usePublishedPortfolioItems();
   const { copy } = useLanguage();
+  const siteAssets = useResolvedSiteAssets();
   const hero = copy.hero;
-  const [primaryItem, teaserItem] = curatedItems.filter((item) => item.isHome).slice(0, 2);
+  const [primaryItem, teaserItem] = homeItems.slice(0, 2);
   const criticalHeroSources = useMemo(
     () => [primaryItem, teaserItem].filter(Boolean).map((item) => getPortfolioImageSource(item)),
     [primaryItem, teaserItem],
@@ -34,10 +35,10 @@ function HeroSection() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="#portfolio" className="button-primary">
+            <LoadingLink href="#portfolio" className="button-primary">
               {hero.primaryCta}
               <ArrowUpRight className="h-4 w-4" />
-            </a>
+            </LoadingLink>
             <LoadingLink href="/portfolio" className="button-secondary">
               {hero.archiveCta}
               <ArrowUpRight className="h-4 w-4" />
@@ -75,7 +76,16 @@ function HeroSection() {
                   <div className="flex items-center justify-between border-b border-line/80 px-4 py-3">
                     <div className="flex items-center gap-3">
                       <span className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] border border-line/70 bg-card">
-                        <img src={logoMark} alt="FADD GRAPHICS" className="h-6 w-6 dark:brightness-[1.35]" />
+                        {siteAssets.headerLogoLight?.url ? (
+                          <img src={siteAssets.headerLogoLight.url} alt={siteAssets.headerLogoLight.alt_text || "FADD GRAPHICS"} className="h-6 w-6 object-contain dark:hidden" />
+                        ) : (
+                          <span className="text-[0.68rem] font-extrabold tracking-[-0.06em] text-text dark:hidden">FG</span>
+                        )}
+                        {siteAssets.headerLogoDark?.url ? (
+                          <img src={siteAssets.headerLogoDark.url} alt={siteAssets.headerLogoDark.alt_text || "FADD GRAPHICS"} className="hidden h-6 w-6 object-contain dark:block" />
+                        ) : (
+                          <span className="hidden text-[0.68rem] font-extrabold tracking-[-0.06em] text-text dark:block">FG</span>
+                        )}
                       </span>
                       <div>
                         <p className="editorial-note">{hero.teaserEyebrow}</p>
@@ -150,7 +160,20 @@ function HeroSection() {
                     </div>
                   </div>
                 </article>
-              ) : null}
+              ) : (
+                <article className="flex min-h-[26rem] items-center justify-center rounded-[1.45rem] border border-line/80 bg-surface px-6 text-center">
+                  <div>
+                    <p className="editorial-note">{hero.teaserEyebrow}</p>
+                    <p className="mt-3 text-[1rem] leading-7 text-muted">
+                      Portfolio pilihan akan tampil setelah item ditandai Home dari dashboard admin.
+                    </p>
+                    <LoadingLink href="/portfolio" className="button-primary mt-5 justify-center">
+                      {hero.archiveButton}
+                      <ArrowUpRight className="h-4 w-4" />
+                    </LoadingLink>
+                  </div>
+                </article>
+              )}
             </div>
           </div>
         </div>

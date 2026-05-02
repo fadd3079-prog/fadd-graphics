@@ -5,9 +5,7 @@ import PortfolioMasonry from "../components/PortfolioMasonry";
 import SectionHeading from "../components/SectionHeading";
 import PortfolioModal from "../components/PortfolioModal";
 import {
-  featuredPortfolioItems,
   getPortfolioImageSource,
-  portfolioArchivePreview,
   portfolioCategories,
   type PortfolioDisplayItem,
   type PortfolioCategory,
@@ -18,22 +16,22 @@ import { useLanguage } from "../hooks/useLanguage";
 function PortfolioSection() {
   const [activeCategory, setActiveCategory] = useState<PortfolioCategory | "all">("all");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const { curatedItems } = usePublishedPortfolioItems();
+  const { featuredItems, galleryItems } = usePublishedPortfolioItems();
   const { copy } = useLanguage();
   const portfolioCopy = copy.portfolio;
-  const featuredItems = curatedItems.filter((item) => item.isFeatured).slice(0, 3);
-  const displayFeaturedItems = featuredItems.length ? featuredItems : featuredPortfolioItems;
+  const displayFeaturedItems = featuredItems.slice(0, 3);
   const [primaryFeaturedItem, ...secondaryFeaturedItems] = displayFeaturedItems;
+  const archivePreviewItems = galleryItems.slice(0, 7);
 
   const filteredItems =
     activeCategory === "all"
-      ? curatedItems
-      : curatedItems.filter((item) => item.category === activeCategory);
+      ? galleryItems
+      : galleryItems.filter((item) => item.category === activeCategory);
 
   const selectedItem =
     selectedItemId === null
       ? null
-      : curatedItems.find((item) => item.id === selectedItemId) ?? null;
+      : galleryItems.find((item) => item.id === selectedItemId) ?? null;
 
   const getCategoryLabel = (categoryId: PortfolioCategory | "all") =>
     portfolioCopy.categories[categoryId] ?? portfolioCopy.categories.all;
@@ -56,6 +54,8 @@ function PortfolioSection() {
                   src={getPortfolioImageSource(primaryFeaturedItem)}
                   alt={primaryFeaturedItem.title}
                   className="h-full w-full object-cover transition duration-500 ease-premium hover:scale-[1.02]"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
               <div className="space-y-2.5 p-4 sm:p-5">
@@ -87,6 +87,8 @@ function PortfolioSection() {
                     src={getPortfolioImageSource(item)}
                     alt={item.title}
                     className="h-full w-full object-cover transition duration-500 ease-premium hover:scale-[1.02]"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <div className="space-y-2.5 p-4">
@@ -99,6 +101,13 @@ function PortfolioSection() {
               </article>
             ))}
           </div>
+          {!primaryFeaturedItem ? (
+            <div className="section-frame rounded-[1.65rem] p-6 lg:col-span-2">
+              <p className="text-[0.95rem] leading-7 text-muted">
+                Belum ada karya yang ditandai sebagai Featured dari dashboard.
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <div className="flex flex-col items-center gap-5">
@@ -152,7 +161,15 @@ function PortfolioSection() {
         </div>
 
         <div className="mx-auto w-full max-w-[90rem]">
-          <PortfolioMasonry items={filteredItems} onSelect={(item) => setSelectedItemId(item.id)} />
+          {filteredItems.length ? (
+            <PortfolioMasonry items={filteredItems} onSelect={(item) => setSelectedItemId(item.id)} />
+          ) : (
+            <div className="section-frame rounded-[1.5rem] p-6 text-center">
+              <p className="text-[0.95rem] leading-7 text-muted">
+                Portfolio belum tersedia untuk kategori ini.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="section-frame rounded-[1.75rem] p-5 sm:p-6">
@@ -173,15 +190,24 @@ function PortfolioSection() {
           </div>
 
           <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-            {portfolioArchivePreview.map((item) => (
-              <div key={item.imageName} className="overflow-hidden rounded-[0.95rem] border border-line/80 bg-surface">
+            {archivePreviewItems.map((item) => (
+              <div key={item.id} className="overflow-hidden rounded-[0.95rem] border border-line/80 bg-surface">
                 <img
-                  src={item.source}
-                  alt=""
+                  src={getPortfolioImageSource(item)}
+                  alt={item.title}
                   className="aspect-[4/5] w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
             ))}
+            {!archivePreviewItems.length ? (
+              <div className="col-span-full rounded-[1rem] border border-line bg-surface px-4 py-5 text-center">
+                <p className="text-[0.92rem] leading-6 text-muted">
+                  Arsip portfolio akan tampil setelah data dipublikasikan dari dashboard.
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

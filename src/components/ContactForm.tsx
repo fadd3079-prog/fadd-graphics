@@ -2,6 +2,7 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { Send } from "lucide-react";
 import SocialIcon from "./SocialIcon";
 import { useLanguage } from "../hooks/useLanguage";
+import { useContactLinks } from "../hooks/useSiteData";
 
 type FormValues = {
   name: string;
@@ -55,8 +56,11 @@ function validate(values: FormValues, errors: ReturnType<typeof useLanguage>["co
 }
 
 function ContactForm() {
-  const { copy } = useLanguage();
+  const { copy, language } = useLanguage();
+  const contactLinks = useContactLinks(language);
   const formCopy = copy.contact.form;
+  const whatsappLink = contactLinks.find((link) => link.type === "whatsapp");
+  const emailLink = contactLinks.find((link) => link.type === "email");
   const [values, setValues] = useState<FormValues>(initialValues);
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<FormStatus>({
@@ -117,7 +121,8 @@ function ContactForm() {
       values.message,
     ].join("\n");
 
-    const href = `https://wa.me/6283150964050?text=${encodeURIComponent(whatsappMessage)}`;
+    const baseWhatsappHref = whatsappLink?.href ?? "https://wa.me/6283150964050";
+    const href = `${baseWhatsappHref}${baseWhatsappHref.includes("?") ? "&" : "?"}text=${encodeURIComponent(whatsappMessage)}`;
 
     window.open(href, "_blank", "noopener,noreferrer");
 
@@ -222,7 +227,7 @@ function ContactForm() {
                 {formCopy.openWhatsapp}
               </a>
               <a
-                href="mailto:fadd3079@gmail.com"
+                href={emailLink?.href ?? "mailto:faddgraphics@gmail.com"}
                 className="button-secondary"
               >
                 <SocialIcon name="email" className="h-4 w-4" />

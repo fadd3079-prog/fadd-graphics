@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import LoadingLink from "../components/LoadingLink";
 import PortfolioMasonry from "../components/PortfolioMasonry";
 import PortfolioModal from "../components/PortfolioModal";
 import SectionHeading from "../components/SectionHeading";
 import { getPortfolioImageSource, type PortfolioDisplayItem } from "../data/portfolio";
 import { useCriticalImages } from "../hooks/useCriticalImages";
+import { useGlobalLoadingState } from "../hooks/useGlobalLoadingState";
 import { usePublishedPortfolioItems } from "../hooks/usePublishedPortfolioItems";
 import { useLanguage } from "../hooks/useLanguage";
 
@@ -29,6 +30,7 @@ function PortfolioPage() {
   const { galleryItems, isLoading, error } = usePublishedPortfolioItems();
   const { copy } = useLanguage();
   const pageCopy = copy.portfolio.page;
+  useGlobalLoadingState(isLoading);
   const criticalImageSources = useMemo(
     () => galleryItems.slice(0, priorityPortfolioImageCount).map(getPortfolioImageSource),
     [galleryItems],
@@ -49,14 +51,14 @@ function PortfolioPage() {
           align="center"
         />
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Link to="/" className="button-secondary">
+          <LoadingLink href="/" className="button-secondary">
             <ArrowLeft className="h-4 w-4" />
             {pageCopy.backHome}
-          </Link>
-          <a href="/#contact" className="button-primary">
+          </LoadingLink>
+          <LoadingLink href="/#contact" className="button-primary">
             {pageCopy.startProject}
             <ArrowUpRight className="h-4 w-4" />
-          </a>
+          </LoadingLink>
         </div>
       </div>
 

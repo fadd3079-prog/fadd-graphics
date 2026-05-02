@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="id" class="scroll-smooth">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FADD GRAPHICS - Freelance Graphic Designer</title>
+    <title>FADD GRAPHICS - Graphic Designer</title>
     <meta
       name="description"
       content="FADD GRAPHICS by Mufaddhol - personal portfolio and freelance graphic design service for logo, poster, social media, and event publication needs."
@@ -20,7 +20,7 @@
       media="(prefers-color-scheme: dark)"
     />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="FADD GRAPHICS | Freelance Graphic Designer" />
+    <meta property="og:title" content="FADD GRAPHICS | Graphic Designer" />
     <meta
       property="og:description"
       content="Personal graphic design portfolio by Mufaddhol, focused on clear visual design for brands, organizations, events, and promotional needs."
@@ -29,14 +29,41 @@
     <meta property="twitter:card" content="summary_large_image" />
     <meta
       property="twitter:title"
-      content="FADD GRAPHICS | Freelance Graphic Designer"
+      content="FADD GRAPHICS | Graphic Designer"
     />
     <meta
       property="twitter:description"
       content="Personal graphic design portfolio by Mufaddhol, focused on clear visual design for brands, organizations, events, and promotional needs."
     />
     <meta property="twitter:image" content="/og-cover.webp" />
+    <style>
+      html {
+        background: #f7f8f9;
+        color: #111214;
+      }
+
+      html.dark {
+        background: #0c0d0f;
+        color: #efefec;
+      }
+
+      body,
+      #root {
+        min-height: 100vh;
+        margin: 0;
+        background: inherit;
+        color: inherit;
+      }
+    </style>
     <script>
+      if ("scrollRestoration" in history) {
+        history.scrollRestoration = "manual";
+      }
+
+      if (!window.location.hash) {
+        window.scrollTo(0, 0);
+      }
+
       const storedTheme = localStorage.getItem("fadd-theme");
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
